@@ -1,0 +1,1843 @@
+1
+Spring REST Quick Reference Document 
+Table of Contents 
+Service Layer using Spring .......................................................................................................... 2
+Java-Annotation based configuration – .................................................................................. 2
+Dependency Injection using Autowiring ................................................................................. 3
+Spring Boot Application .......................................................................................................... 4
+Spring AOP .............................................................................................................................. 4
+Persistence Layer using Spring Data ........................................................................................... 7
+Defining Entity classes: ........................................................................................................... 7
+Configuring Model Mapper and 
+Lombok ................................................................................................................................... 9
+................................................................................................................................................ 9
+Spring Data using 
+MySql .................................................................................................................................... 13
+.............................................................................................................................................. 14
+JPQL Syntax ........................................................................................................................... 17
+Spring Data - Query Approaches .......................................................................................... 19
+Pagination using Spring Data ................................................................................................ 23
+Sorting using Spring Data ...................................................................................................... 23
+Primary key Generation Strategies ....................................................................................... 25
+Stored Procedure Execution ................................................................................................. 27
+Implementing One to One Relationship ............................................................................... 29
+Implementing Many to One Relationship ............................................................................. 29
+Implementing One to Many Relationship ............................................................................. 30
+Spring REST using Spring Boot .................................................................................................. 31
+REST Controller: .................................................................................................................... 32
+CRUD Operations .................................................................................................................. 32
+Swagger UI ............................................................................................................................ 33
+2
+CORS ...................................................................................................................................... 34
+Exception Handling ............................................................................................................... 34
+GSON ..................................................................................................................................... 35
+YAML ..................................................................................................................................... 35
+XML Request/Response ........................................................................................................ 36
+Data Validation ...................................................................................................................... 37
+Spring REST Security (Basic Security) .................................................................................... 37
+Consuming REST APIs with WebClient .................................................................................. 38
+Consuming GET Request ....................................................................................................... 39
+Consuming POST Request: .................................................................................................... 39
+Consuming PUT Request: ...................................................................................................... 39
+Consuming DELETE Request: ................................................................................................ 39
+Writing Test cases using JUnit: .............................................................................................. 39
+Writing test cases using Mockito and JUnit: ......................................................................... 41
+Unit Testing Spring REST Controllers: ................................................................................... 43
+Spring Microservices Cheat Sheet……………………………………………………………………………………. 49
+Spring Security…………………………….………………………………………………………………….……………49
+Spring Cloud…………………………………………………………………………………………………….…………..49
+Distributed Configuration……………………………………………………………………………………………..49
+Spring Cloud Config Server….…………………………………………………………………………..…………….49
+Spring Cloud Consul………………………………………………………………………………………….…………..50
+Service Discovery……………………………………………………………………………………………………………51
+Load Balancing……………………………………………………………………………………………………………….52
+Resilience4j…………………………………………………………………………………………………………………… 53
+Spring Cloud Gateway…..…………………………………………………………………………………………………55
+Lombok Configuration……………………………………………………………………………………………………. 56
+3
+Service Layer using Spring 
+Java-Annotation based configuration –
+• @Component : It is a general purpose annotation to mark a class as Spring bean.
+@Component
+public class CustomerLoginController{
+//rest of the code
+}
+• @Service - It is used to define a service layer Spring bean. It is specialization of the 
+@Component annotation for the service layer.
+@Service public class CustomerLoginSeviceImpl implements 
+CustomerLoginService { //rest of the code
+}
+• @Repository - It is used to define a persistence layer Spring bean. It is specialization 
+of the @Component annotation for the persistence layer.
+@Repository
+public class CustomerLoginRepositoryImpl implements CustomerLoginRepository {
+//rest of the code
+}
+• @Controller - It is used to defined a web component. It is specialization of the 
+@Component annotation for the presentation layer.
+@Controller public class 
+CustomerLoginController {
+//rest of the code
+}
+4
+Dependency Injection using Autowiring
+• You can use @Autowired annotation directly on properties. For example, in the following 
+code, CustomerLoginRepository is injected in CustomerLoginServiceImpl class using 
+@Autowired annotation:
+import org.springframework.beans.factory.annotation.Autowired; public 
+class CustomerLoginServiceImpl implements CustomerLoginService {
+@Autowired
+private CustomerLoginRepository customerLoginRepository;
+………..
+}
+Spring Boot Application
+package com.infy; import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication public class 
+DemoSpringBootApplication {
+public static void main(String[] args) {
+SpringApplication.run(DemoSpringBootApplication.class, args);
+}
+}
+• @SpringBootApplication is a convenient annotation that adds the following:
+o @Configuration marks the class as a source where bean definitions can be found for the 
+application context.
+o @EnableAutoConfiguration tells Spring Boot to start adding beans based on the class 
+path and property settings.
+o @ComponentScan tells Spring to look for other components, configurations, and, 
+services in the packages being specified.
+5
+Spring AOP
+Dependency : 
+<dependency>
+<groupId>org.springframework.b oot</groupId>
+<artifactId>spring-boot-starteraop</artifactId>
+</dependency>
+Pointcut Expression syntax
+execution(<modifiers> <return-type> <fully qualified class name>.<method-name>(parameters)) where,
+• execution is called as pointcut designator. It tells Spring that join point is the execution of the 
+matching method.
+• <modifiers> determines the access specifier of the matching method. It could either be public, 
+protected, or private. It is not mandatory.
+• <return-type> determines the return type of the method in order for a join point to be matched. It 
+is mandatory. If the return type doesn't matter wildcard * is used.
+• <fully qualified class name> specifies the fully qualified name of the class which has methods on 
+the execution of which advice gets executed. It is optional. You can also use * wildcard as name or part 
+of a name.
+• <method-name> specifies the name of the method on the execution of which advice gets 
+executed. It is mandatory. You can also use * wildcard as name or part of a name.
+• parameters are used for matching parameters. To skip parameter filtering, use two dots .. as 
+parameters.
+Before Advice: 
+6
+After Advice: 
+After throwing Advice: 
+@Before("execution(* 
+com.infy.service.*Impl.*(..))")
+public void before() throws 
+InfyBankException {
+LOGGER.info("Before advice 
+called.");
+}
+@After("execution(* 
+com.infy.service.*Impl.*(..))")
+public void after() throws 
+InfyBankException {
+LOGGER.info("After advice 
+called.");
+}
+@AfterThrowing(pointcut = 
+"execution(* 
+com.infy.service.*Impl.*(..))", 
+throwing = "exception")
+public void 
+afterThrowing(InfyBankException 
+exception) throws 
+InfyBankException {
+LOGGER.error(exception.getMess
+age(), exception);
+}@AfterReturning("execution(* 
+com.infy.service.*Impl.*(..))")
+7
+After Returning Advice: 
+Around Advice: 
+public void afterReturning() 
+throws InfyBankException {
+LOGGER.info("After returning 
+advice called.");
+}
+@AfterReturning(value = 
+"execution(* 
+com.infy.service.*Impl.*(..)),retur 
+ning = "returnvalue"")
+public void afterReturning(String 
+returnvalue) throws 
+InfyBankException {
+LOGGER.info("After returning 
+advice called.");
+}
+@Around("execution(* 
+com.infy.service.*Impl.*(..))")
+public void 
+aroundAdvice(ProceedingJoinPoi 
+nt proceedingJoinPoint) throws 
+Throwable {
+LOGGER.info("Before proceeding 
+part of the Around advice.");
+proceedingJoinPoint.proceed();
+LOGGER.info("After proceeding 
+part of the Around advice.");
+}
+8
+Persistence Layer using Spring Data
+Defining Entity classes:
+The classes which are mapped to a table and 
+whose instance represents a row in table are entity classes. JPA provides annotations to 
+create entity classes which are present in the jakarta.persistence package. Some of these 
+annotations are as follows:
+• @Entity : It specifies that the Java class is an entity class. 
+• @Id : Every object of entity class must have an attribute which uniquely identifies it. This is 
+called as primary key attribute or identifier. Usually, it is the attribute mapped to the primary key 
+column of table. It is specified using @Id annotation.
+• @Table : It specifies the table with which entity class is mapped. By default, entity class is 
+mapped with a table which has same name as the class name. If entity class has to be mapped 
+with a table whose name is different from class name then, this annotation is used. 
+• @Column : It specifies the name of column in table with which attribute in entity class is 
+mapped. By default, column name is mapped with a column which has same name as the 
+attribute name. If attribute name is different from column name, then this annotation is used. 
+• @Transient : It specifies the attributes which are not stored in table.
+• @Enumerated: Sometimes, entity class has a reference of enum and if you want to persist it, 
+you can use @Enumerated annotation.
+9
+In the above code, CustomerType is annotated with @Enumerated annotation. 
+The EnumType property is used to specify how the enum should be persisted in the database.
+The possible values of EnumType property are as follows: 
+@Enumerated(EnumType.STRING) specifies that the enum will be written and read from the 
+corresponding database column as a String. So, customerType set to SILVER will be persisted as SILVER. 
+@Entity
+@Table(name=”customer”)
+public class Customer {
+@Id
+@Column(name="customer_id")
+private Integer customerId;
+@Column(name="email_id")
+private String emailId; private 
+String name;
+@Column(name="date_of_birth"
+)
+private LocalDate dateOfBirth;
+@Enumerated(EnumType.STRING
+)
+private CustomerType 
+customerType;
+//getter and setters
+}
+public enum CustomerType{
+SILVER,GOLD,PLATINUM;
+}
+10
+@Enumerated(EnumType.ORDINAL) specifies that the enum will be persisted as an integer value. So, 
+customerType set to SILVER will be persisted as 0 and customerType set to GOLD will be persisted as 1. 
+The default is EnumType.ORDINAL.
+Configuring Model Mapper and Lombok
+In order to autogenerate the boilerplate code, 
+@Data is used. 
+@Data public class CustomerDTO { 
+private Integer customerId; 
+private String emailId; private 
+String name; private 
+LocalDate dateOfBirth; 
+}
+ModelMapper: 
+<dependency>
+<groupId>org.projectlombok</gr 
+oupId>
+<artifactId>lombok</artifactId>
+<scope>provided</scope>
+<version>1.18.38</version>
+</dependency>
+<dependency>
+<groupId>org.modelmapper</gro 
+upId>
+<artifactId>modelmapper</artifa 
+ctId>
+<version>3.2.4</version>
+</dependency>
+11
+The ModelMapper object is created at the class level.
+private ModelMapper modelMapper = new ModelMapper();
+In the getCustomer() method, .map method of Model Mapper helps in mapping object from Customer to CustomerDTO.
+@Override
+public CustomerDTO getCustomer(Integer customerId) throws InfyBankException {
+Optional<Customer> optional = customerRepository.findById(customerId);
+Customer customer = optional.orElseThrow(() -> new InfyBankException("Service.CUSTOMER_NOT_FOUND"));
+return modelMapper.map(customer, CustomerDTO.class);
+}
+In getAllCustomers() method, .map method of Model Mapper helps to retrieve a list of CustomerDTO.
+@Override
+public List<CustomerDTO> getAllCustomers() throws InfyBankException {
+Iterable<Customer> customers = customerRepository.findAll();
+return modelMapper.map(customers, new TypeToken<List<CustomerDTO>>() {
+}.getType());
+}
+In the above method, 
+TypeToken<List<CustomerDTO>> is the desired destination type.
+{}: This is an empty anonymous class declaration.
+.getType(): This method call on the anonymous subclass of TypeToken and retrieves the actual Type object representing List<CustomerD
+In addCustomer() method, .map method of Model Mapper helps to map CustomerDTO to Customer object.
+@Override
+public Integer addCustomer(CustomerDTO customerDTO) throws InfyBankException {
+return customerRepository.save(modelMapper.map(customerDTO, Customer.class)).getCustomerId();
+Spring Data using MySql 12
+public interface CustomerRepository extends CrudRepository<Customer, Integer> {
+}
+public interface CustomerService {
+public void addCustomer(CustomerDTO customer) throws InfyBankException;
+public CustomerDTO getCustomer(Integer customerId) throws InfyBankException;
+public List<CustomerDTO> findAll() throws InfyBankException;
+public void updateCustomer(Integer customerId, String emailId) throws InfyBankException;
+public void deleteCustomer(Integer customerId)throws InfyBankException;
+}
+@Service(value = "customerService")
+@Transactional
+public class CustomerServiceImpl implements CustomerService {
+@Autowired
+private CustomerRespository customerRespository;
+@Override
+public void addCustomer(CustomerDTO customerDto) throws InfyBankException {
+Optional<Customer> optional = customerRespository.findById(customerDto.getCustomerId());
+if (optional.isPresent())
+throw new InfyBankException("Service.CUSTOMER_FOUND");
+Customer customer = new Customer();
+customer.setDateOfBirth(customerDto.getDateOfBirth());
+customer.setEmailId(customerDto.getEmailId());
+customer.setName(customerDto.getName());
+customer.setCustomerId(customerDto.getCustomerId());
+customerRespository.save(customer);
+}
+@Override
+public CustomerDTO getCustomer(Integer customerId) throws InfyBankException {
+Optional<Customer> optional = customerRespository.findById(customerId);
+13
+JPQL Syntax
+• Select clause: SELECT c FROM Customer c o SELECT c.customerName FROM Customer c
+o SELECT c.customerName, c.dateOfBirth FROM Customer c
+• Where clause: SELECT c FROM Customer c WHERE c.customerId = 1002; o Named parameter: 
+SELECT c FROM Customer c WHERE c.customerId = :customerId; o Positional Parameter: select c 
+FROM Customer c WHERE c.customerId = ?1; o Equal: SELECT c FROM Customer c WHERE 
+c.customerId = 1002 o Not Equal : SELECT c FROM Customer c WHERE c.city != 'Seattle' o Greater 
+Than: SELECT c FROM Customer c WHERE c.dateOfBirth > '1-Jan-1980' o Greater Than or Equal : 
+SELECT c FROM Customer c WHERE c.dateOfBirth >= '1-Jan1980' o Less Than: SELECT c FROM Customer c WHERE c.dateOfBirth < '1-Jan-1980' o
+Less Than or Equal : SELECT c FROM Customer c WHERE c.dateOfBirth <= '1-Jan-1980' o
+Between: SELECT c FROM Customer c WHERE c.dateOfBirth BETWEEN '1-Jan-1975' AND 
+'1-Jan-1980' o Like: SELECT c FROM Customer c WHERE c.name LIKE
+'R%' o Is Null: SELECT c FROM Customer c WHERE c.emailId IS NULL o In: 
+SELECT c FROM Customer c WHERE c.city IN ('Seattle','Vancouver') o Is 
+Empty: SELECT c FROM Customer c WHERE c.loans IS EMPTY o Is Not 
+Empty: SELECT c FROM Customer c WHERE c.loans IS NOT EMPTY o Suze: 
+SELECT c FROM Customer c WHERE SIZE(c.loans) > 2
+• Aggregate Functions:
+o SELECT AVG(a.balance) FROM Account a o SELECT SUM(a.balance) 
+FROM Account a o SELECT COUNT(a) FROM Account a o SELECT 
+MIN(a.balance) FROM Account a o SELECT MAX(a.balance) FROM 
+Account a
+• String Functions 
+JPQL provides string functions. These functions can be used WHERE and SELECT clause of query. The 
+following table shows some of the string functions:
+• Grouping and Ordering – The GROUP BY, HAVING and ORDER BY clause:
+o SELECT c.city, COUNT(c) FROM Customer c GROUP BY c.city o SELECT 
+c.city, COUNT(c) FROM Customer c GROUP BY c.city HAVING c.city IN 
+('Seatle','Vancouver') o SELECT c FROM Customer 
+c ORDER BY c.name ASC
+• Update and Delete Queries:
+o UPDATE Customer c SET c.city = 'Seatle' where c.customerId = 1002; o
+DELETE FROM Account a WHERE a.status = 'INACTIVE'
+14
+Spring Data - Query Approaches
+Query creation based on the method name 
+Some basic rules for naming these methods are as follows :
+• The method name should start with "find...By", "get...By", "read...By", "count..By" or 
+"query...By" followed by search criteria. The search criteria is specified using attribute name of 
+entity class and some specified keywords. For example, to search customer based on emailId, 
+the following query method has to be added to repository interface :
+o Customer findByEmailId(String emailId);
+• The number of parameters in query method must be equal to number of search conditions and 
+they must be specified in the same order as mentioned in search conditions.
+• To fetch data based on more than one condition, you can concatenate entity attribute names 
+using And and Or keywords to specify search criteria. For example, to search customers based 
+on email address or name , the following method has to be added to repository interface : o
+List<Customer> findByEmailIdOrName(String emailId, String name);
+• Some other keywords that can be used inside query method names are Between, Is, Equals, Not, 
+IsNot, IsNull, IsNotNull, LessThan, LessThanEqual, GreaterThan, GreaterThanEqual, After, Before, 
+Like, etc.
+• The following table shows the use of above keywords :
+• Keyword • Method Name • Description 
+• Between • findByDateofBirthBetween(LocalDate 
+fromDate, LocalDate toDate)
+• Find 
+customers 
+whose date 
+of birth is 
+between 
+specified 
+dates
+• Equals • findByEmailIdEquals(String emailId)
+• Find 
+customers 
+with 
+specified 
+emailid
+15
+• LessThan • findByDateofBirthLessThan(LocalDate 
+dateOfBirth)
+• Find 
+customers 
+born before 
+specified 
+date
+• Keywords used in QueryMethodName
+• Keyword • Method Name • Description 
+• LessThanEqual • findByDateofBirthLessThanEqual(LocalDate 
+dateOfBirth)
+• Find 
+customers 
+born on or 
+before 
+specified 
+date
+• GreaterThan • findByDateofBirthGreaterThanl(LocalDate 
+dateOfBirth)
+• Find 
+customers 
+born after 
+specified 
+date
+• GreaterThanEqual • findByDateofBirthGreaterThanEqual(LocalDate 
+dateOfBirth)
+• Find 
+customers 
+born on or 
+afer 
+specified 
+date
+• After • findByDateofBirthAfter(LocalDate dateOfBirth)
+• Find 
+customers 
+born after 
+specified 
+date
+• Before • findByDateofBirthBefore(LocalDate dateOfBirth)
+• Find 
+customers 
+born before 
+specified 
+date
+16
+• Like • findByNameLike(String pattern)
+• Find 
+customers 
+having with 
+specified 
+pattern
+• Null • findByEmailIdNull()
+• Find 
+customers 
+who don’t 
+• Keywords used in QueryMethodName
+• Keyword • Method Name • Description 
+have any 
+emailId
+• NotNull • findByEmailIdNotNull()
+• Find 
+customers 
+who have 
+emailId
+• To sort the results by a specified column, you can use OrderBy keyword. By default, results are 
+arranged in ascending order. For example, the following method searches customers by name 
+and also orders the result in ascending order of date of birth: o List<Customer> 
+findByNameOrderByDateOfBirth(String name);
+• For sorting the results in descending order you can use Desc keyword as follows:
+o List<Customer> findByNameOrderByDateOfBirthDesc(String name);
+• To limit the number of results returned by a method, add First or Top keyword before the first 
+'By' keyword. To fetch more than one result, add the numeric value to the First and the Top 
+keywords. For example, the following methods returns the first 5 customers whose emailId is 
+given as method parameter: 
+o List<Customer> findFirst5ByEmailId(String emailId); o List<Customer> 
+findTop5ByByEmailId(String emailId);
+Query creation using @Query annotation public interface CustomerRepository 
+extends CrudRepository<Customer, Integer> {
+//JPQL query
+@Query("SELECT c.name FROM Customer c WHERE c.emailId = :emailId") // NAMED PARAMETER
+String findNameByEmailId(@Param("emailId") String emailId); 
+17
+@Query("SELECT c.name FROM Customer c WHERE c.emailId = ?1") // POSITIONAL PARAMETER
+String findNameByEmailId(String emailId); 
+}
+Executing update and delete queries using @Modifying annotation public 
+interface CustomerRespository extends CrudRepository<Customer, Integer> {
+//JPQL query
+@Query("UPDATE Customer c SET c.emailId = :emailId WHERE c.customerId = :customerId")
+@Modifying
+Integer updateCustomerEmailId(@Param("emailId") String updateCustomerByEmailId, 
+@Param("customerId") Integer customerId);
+}
+Query creation using @NamedQuery annotation 
+The named queries are queries with a name and are defined in entity classes using @NamedQuery 
+annotation. Using Spring Data, default naming strategy of named query is to start with entity class name 
+followed by dot (.) operator and then the name of the invoked repository method. For example, if 
+CustomerEntity is entity class and findNameByEmailId is the name of repository method then query 
+name will be as follows:
+Customer.findNameByEmailId
+@Entity
+@Table(name="customer")
+@NamedQuery(name="Customer.findNameByEmailId", query="SELECT c.name FROM Customer 
+c WHERE c.emailId = :emailId")
+public class Customer {
+@Id
+private Integer customerId; 
+private String emailId; private String 
+name; private LocalDate dateOfBirth; 
+@Enumerated(value=EnumType.STRING)
+private CustomerType customerType;
+// getter and setter methods
+}
+18
+To use this named query in a repository, you need to add a query method in repository interface with
+the same name as defined in named query and the return type of method should be specified 
+according to named query. For example, the following method has to be added to repository to invoke 
+named query CustomerEntity.findNameByEmailId.
+public interface CustomerRespository extends CrudRepository<Customer, Integer>{
+String findNameByEmailId(@Param("emailId") String emailId); 
+}
+Pagination using Spring Data
+public interface TransactionRepository extends PagingAndSortingRepository<Transaction, 
+Integer>{
+}
+Pageable firstPagewithFiveRecords = PageRequest.of(0,5);
+Page<Transaction> transactions = transactionRepository.findAll(firstPageWithFiveRecords);
+List<Transaction> entityList = transactions.getContent();
+Suppose, you want to fetch the details of all transactions performed after a specified date and also want
+to do paging, then you can add query method to CustomerRepository as follows:
+public interface TransactionRepository extends PagingAndSortingRepository<Transaction, 
+Integer>{
+public List<Transaction> findByTransactionDateAfter(LocalDate transactionDate, Pageable pageable);
+}
+In above repository, findByTransactionDateAfter() query method also accepts Pageable object as 
+parameter for paging. If you want to fetch the details of transactions which are performed after 29-
+Jan1996 and also implement paging with page size = 2, then, you need to create a Pageable object with 
+page number = 0 and page size = 2, pass it to findByTransactionDateAfter() method along with the 
+transaction date as follows:
+LocalDate transactionDate = LocalDate.of(1996, 1, 29);
+Pageable firstPagewithTwoRecords = PageRequest.of(0,2);
+Pageable pageable = PageRequest.of(pageNo, pageSize);
+19
+List<Transaction> entityList = 
+transactionRepository.findByTransactionDateAfter(transactionDate,pageable);
+Sorting using Spring Data
+public interface TransactionRepository extends PagingAndSortingRepository<Transaction, 
+Integer>{
+}
+Since this repository is extending PagingAndSortingReository repository, so findAll(Sort sort) is available 
+to this interface for sorting. 
+The findAll(Sort sort) method accepts object of Sort class as parameter. This class provides different ways 
+to sort data using single and multiple columns and direction of sorting, i.e., ascending or descending 
+using different methods. Some important methods of the Sort class are as follows: Sort class Methods
+Method Description 
+public static Sort by(String… 
+properties)
+Creates a Sort object for given properties.
+public Sort descending() Returns a Sort object with current data in descending 
+order.
+public Sort ascending() Returns a Sort object with current data in ascending 
+order.
+
+To sort the transaction details using transaction date, you need to first create an object of Sort class 
+using by() method with transactionDate as parameter value and then pass the Sort object to findAll() 
+method as follows:
+// Sorted by 'transactionDate' attribute in ascending order 
+Sort sort = Sort.by("transactionDate");
+Iterable<Transaction> transactions = transactionRepository.findAll(sort);
+To sort the details in descending order of transaction date, you need to use the descending () method as 
+follows:
+// ordered by 'transactionDate' attribute in descending order 
+Sort sort = Sort.by("transactionDate").descending();
+20
+Iterable<Transaction> transactions = transactionRepository.findAll(sort);
+You can also sort by transaction date and then by transaction amount as follows:
+// sorted by 'transactionDate' attribute in descending order and 'transactionAmount' in 
+ascending order
+Sort sort = Sort.by("transactionDate").descending().and(Sort.by("transactionAmount"));
+Iterable<Transaction> transactions = transactionRepository.findAll(sort);
+If you want to find transaction details after a specific transaction date and sorted based on transaction 
+date along with pagination, then you have to add query method to TransactionRepository as follows:
+public interface TransactionRepository extends PagingAndSortingRepository<Transaction, 
+Integer>{
+public List<TransactionEntity> findByTransactionDateAfter(LocalDate transactionDate, Pageable 
+pageable);
+}
+If you want to fetch the details of transactions which are performed after 29-Jan-1996 and sorted based 
+on transaction date with page size = 2, then, you need to create an object of Sort using by() method with 
+transactionDate as parameter value. Then, you need to create Pageable object with page number =
+0, page size = 2 and object of Sort class and pass this Pageable object to findByTransactionDateAfter()
+method along with transaction date as follows:
+LocalDate transactionDate = LocalDate.of(1996, 1, 29);
+Sort sort = Sort.by("transactionDate");
+Pageable pageable = PageRequest.of(0,2,sort);
+List<Transaction> transactionList = 
+transactionRepository.findByTransactionDateAfter(transactionDate, pageable);
+Primary key Generation Strategies
+Identity: @Entity
+public class Customer{
+@Id
+@GeneratedValue(strategy=GenerationType.IDENTITY) private 
+Integer customerId;
+// rest of the code
+21
+}
+Table: Default table 
+@Entity
+public class Customer{
+@Id
+@GeneratedValue(strategy=GenerationType.TABLE) 
+private Integer customerId;
+//rest of the code
+}
+Table : custom table 
+@Entity public class 
+Customer{
+@Id
+@TableGenerator(
+name="pkgen", 
+table="id_gen", 
+pkColumnName="gen_key", 
+valueColumnName="gen_value", pkColumnValue="cust_id",
+allocationSize=1)
+@GeneratedValue(generator="pkgen",strategy=GenerationType.TABLE) private 
+Integer customerId;
+//rest of the code
+}
+Sequence: default sequence 
+@Entity public class 
+Customer {
+@Id
+22
+@GeneratedValue(strategy=GenerationType.SEQUENCE) 
+private Integer customerId;
+// rest of the code
+}
+Sequence : custom 
+@Entity public class 
+Customer{
+@Id
+@SequenceGenerator(name="pkgen",sequenceName="customer_sequence",allocationSize=1)
+@GeneratedValue(generator="pkgen",strategy=GenerationType.SEQUENCE) 
+private Integer customerId;
+// rest of the code
+}
+Stored Procedure Execution
+Consider the below Stored Procedure. For example:
+delimiter $$
+CREATE PROCEDURE FindCustomerByNameAndDateOfBirth_SP(IN customerName VARCHAR(20), IN dob 
+DATE)
+BEGIN
+SELECT * FROM Customer WHERE name=customerName AND date_of_birth=dob;
+END$$
+Mapping Stored Procedures to the respective repository interface methods can be done in four ways. 
+They are
+• The @Procedure annotation in a repository allows mapping methods directly to Stored 
+Procedures, creating a clear correspondence between method names and procedure names.
+@Procedure
+List<Customer> FindCustomerByNameAndDateOfBirth_SP(String name, LocalDate dateOfBirth);
+23
+• When method and stored procedure names differ, use the @Procedureannotation with the 
+actual procedure name as a parameter as mentioned below.
+@Procedure("FindCustomerByNameAndDateOfBirth_SP")
+List<Customer> findCustomerByNameAndDateOfBirth_SP(String name, LocalDate dateOfBirth);
+• We can map different method and stored procedure names usingprocedureName attribute in 
+the @Procedureannotation.
+@Procedure(procedureName="FindCustomerByNameAndDateOfBirth_SP")
+List<Customer> findCustomerByNameAndDateOfBirth_SP(String name, LocalDate dateOfBirth
+• We can also use value attribute to map the method to Stored Procedures.
+@Procedure(value = "FindCustomerByNameAndDateOfBirth_SP")
+List<Customer> findCustomerByNameAndDateOfBirth_SP(String name, LocalDate dateOfBirth);
+Mapping a Stored Procedure using @Query 
+@Query(value = "CALL findCustomersAfterDOB_SP(:dob);", nativeQuery = true)
+List<Customer> findCustomersAfterDateOfBirth(@Param("dob") LocalDate dob);
+Mapping Stored Procedure in Entity Class 
+@NamedStoredProcedureQuery(name = "<ClassName>.<ProcedureName>", procedureName = 
+“<STORED PROCEDURE>”,
+parameters = <Parameter-List>)
+@Entity
+@NamedStoredProcedureQuery(name = "Customer.getTotalCustomersByEmailId"
+, procedureName = "GET_TOTAL_CUSTOMER_BY_EMAIL", parameters = {
+@StoredProcedureParameter(mode = ParameterMode.IN, name = "email_id", type = String.class), 
+@StoredProcedureParameter(mode = ParameterMode.OUT, name = "count_out", type = 
+Integer.class)}) public
+class Customer {
+//rest of the code
+}
+The above method call can be mapped with repository methods using @Procedure annotation as 
+below:
+@Procedure(name = "Customer.getTotalCustomersByEmailId")
+24
+Integer getTotalCustomersByEmailId(@Param("email_id") String emailId);
+Implementing One to One Relationship
+A customer can have only one address so you can model this as a one-to-one relationship between
+Customer and Address entity classes with Customer as owner and Address as a target.
+@Entity
+public class Address {
+@Id
+private Long addressId; 
+private String street; 
+private String city;
+}
+@Entity public class 
+Customer {
+@Id
+@GeneratedValue(strategy=GenerationType.IDENTITY) 
+private Integer customerId; private String emailId; 
+private String name; private LocalDate dateOfBirth;
+@OneToOne(cascade = CascadeType.ALL) 
+@JoinColumn(name = "address_id", unique = true) 
+private Address address;
+//getter and setter
+}
+Implementing Many to One Relationship
+A customer can have multiple loans such as car loan, home loan etc. so you can model this as a manytoone relationship between Customer and Loan entity classes with Loan as an owner of the relationship.
+@Entity public class 
+Customer { @Id
+25
+private Integer customerId; 
+@Column(name="emailid") 
+private String emailId; private 
+String name; private LocalDate 
+dateOfBirth;
+//getter and setter methods
+}
+@Entity
+public class Loan{
+@Id
+@GeneratedValue(strategy=GenerationType.IDENTITY) 
+private Integer loanId; private Double amount; 
+private LocalDate issueDate; private String status;
+@ManyToOne(cascade=CascadeType.ALL) 
+@JoinColumn(name="cust_id") 
+private Customer customer;
+//getter and setter methods
+}
+Implementing One to Many Relationship
+A customer can have multiple cards so you can model this as one-to-many relationship between
+Customer and Card entity classes with Customer entity as owner.
+@Entity
+public class Card {
+@Id
+private Integer cardId; private 
+String cardNumber; private 
+LocalDate expiryDate; 
+26
+// getter and setter methods
+}
+@Entity public class 
+Customer{
+@Id
+@GeneratedValue(strategy=GenerationType.IDENTITY) 
+private Integer customerId; private String emailId; 
+private String name; private LocalDate dateOfBirth;
+@OneToMany(cascade=CascadeType.ALL) 
+@JoinColumn(name="cust_id") 
+private List<Card> cards; 
+//getter and setter methods
+}
+Spring REST using Spring Boot 
+• Project Setup: 
+o Create a new Spring Boot project. 
+o Add the necessary dependencies: spring-boot-starter-web, springbootstartertest, spring-boot-starter-validation. 
+o Example: 
+<dependency> 
+<groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starterweb</artifactId> 
+</dependency> 
+REST Controller: 
+o Create a controller class annotated with @RestController. o Define methods 
+for handling different HTTP requests (GET, POST, PUT, DELETE, etc.). 
+27
+o Use annotations like @RequestMapping, @GetMapping, 
+@PostMapping, etc. to map request URLs to controller methods. 
+o Example 
+@RestController public class MyController { @GetMapping("/hello") public String hello() 
+{ return "Hello, World!"; 
+} 
+} 
+CRUD Operations 
+Create (POST): 
+• Use @PostMapping to handle POST requests. 
+• Use @RequestBody to bind the request body to a Java object.
+• Example: 
+@PostMapping("/users") public User createUser(@RequestBody User user) { 
+// ... 
+} 
+Read (GET): 
+• Use @GetMapping to handle GET requests. 
+• Use @PathVariable to extract path variables from the URL. 
+• Use @RequestParam to extract query parameters. 
+• Example: 
+@GetMapping("/users/{id}") public User getUser(@PathVariable Long id) { 
+// ... 
+} 
+Update (PUT): 
+• Use @PutMapping to handle PUT requests. 
+• Use @RequestBody to bind the request body to a Java object.
+• Example: 
+28
+Delete (DELETE): 
+• Use @DeleteMapping to handle DELETE requests.
+• Use @PathVariable to extract the resource ID from the URL. 
+• Example: 
+@DeleteMapping("/users/{id}") public void deleteUser(@PathVariable Long id) { 
+// ... 
+} 
+Swagger UI 
+• Add Dependency: 
+o Add springdoc-openapi-ui dependency to your project. 
+o Example: 
+<dependency> 
+<groupId>org.springdoc</groupId> 
+<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId> 
+<version>2.5.0</version> 
+</dependency> 
+• Enable Swagger: 
+o Annotate your main application class with @OpenAPIDefinition and provide 
+metadata. 
+• Configure Swagger: 
+o Customize the API documentation by using @Operation, @Parameter, and other 
+annotations. 
+@PutMapping("/users/{id}")
+public User updateUser(@PathVariable Long id, @RequestBody User user) { 
+// ... 
+}
+29
+CORS 
+• Enable CORS: 
+• Add @CrossOrigin annotation to your controller class or specific methods.
+• Configure CORS globally in WebMvcConfigurer. o Example: 
+@CrossOrigin(origins = "http://example.com") 
+@RestController public class 
+MyController { 
+// ... 
+} 
+Exception Handling 
+• Global Exception Handler: 
+o Create a @ControllerAdvice class to handle exceptions globally. o
+Use @ExceptionHandler to define methods for specific exceptions. o
+Example: 
+@ControllerAdvice public class 
+GlobalExceptionHandler { 
+@ExceptionHandler(UserNotFoundException.class) 
+public ResponseEntity<String> 
+handleUserNotFoundException(UserNotFoundException ex) { return 
+ResponseEntity.notFound().build(); 
+} 
+} 
+• Custom Exception Classes: 
+o Create custom exception classes to represent specific error conditions. 
+GSON 
+• Add Dependency: 
+o Add com.google.code.gson dependency to your project. 
+o Example: 
+30
+<dependency> 
+<groupid>com.google.code.gson</groupid> 
+<artifactid>gson</artifactid> 
+<version>2.8.8</version> 
+</dependency> 
+• Use GSON:
+o Use Gson class to convert Java objects to JSON and vice versa. 
+YAML 
+• Configure Spring Boot with YAML: 
+• Create a application.yml file to configure your application.
+• Use YAML syntax to define properties. 
+• Example: 
+# application.yml server: 
+port: 8080 spring: 
+datasource: 
+url: jdbc:mysql://localhost:3306/mydatabase 
+username: user password: password 
+XML Request/Response 
+• Add Dependencies: o Add jakarta.xml.bind dependency. 
+o Example: 
+<dependency> 
+<groupId>jakarta.xml.bind</groupId> 
+<artifactId>jakarta.xml.bind-api</artifactId> 
+31
+</dependency> 
+• Configure XML Mapping: 
+o Use @XmlRootElement annotations to map Java objects to XML. o
+Example: 
+@XmlRootElement 
+public class UserDTO { 
+// ... 
+} 
+o The produces="application/xml" attribute specifies that the controller method 
+will return a response in XML format. 
+@GetMapping(value = "/customers/{customerId}", produces = "application/xml")
+public ResponseEntity<CustomerDTO> getCustomer(@PathVariable Integer 
+customerId) throws InfyBankException { 
+//rest of the code 
+} 
+@PostMapping(value = "/customers", consumes = "application/json") public 
+ResponseEntity<String> addCustomer(@RequestBody CustomerDTO 
+customer) throws InfyBankException { 
+//rest of the code 
+} 
+Data Validation 
+• Use @Valid and @Validated: 
+o Annotate your controller methods with @Validated. 
+32
+o Use validation annotations like @NotNull, @NotEmpty, @Size, etc. on your data 
+objects. o Example: 
+@PostMapping("/users") public User createUser(@Valid @RequestBody User user) { 
+// ... 
+} 
+Spring REST Security (Basic Security) 
+• Add Dependency: 
+o Add spring-boot-starter-security dependency to your project. o
+Example: 
+<dependency> 
+<groupId>org.springframework.boot</groupId> 
+<artifactId>spring-boot-starter-security</artifactId> 
+</dependency> 
+• Configure Basic Authentication: 
+o Use @EnableWebSecurity to enable Spring Security. o Example: 
+@Configuration 
+@EnableWebSecurity 
+public class SecurityConfig { 
+//rest of the code 
+} 
+o Configure HttpSecurity to require authentication for specific URLs. 
+o Use UserDetailService to provide user credentials. 
+Consuming REST APIs with WebClient 
+• Add Dependency: 
+Add spring-boot-starter-webflux dependency to your project. 
+33
+o Example: 
+<dependency> 
+<groupId>org.springframework.boot</groupId> 
+<artifactId>spring-boot-starter-webflux</artifactId> 
+</dependency> 
+Create a WebClient instance and send the HTTP request to the REST API 
+WebClient webClient = WebClient.create(); 
+Consuming GET Request 
+CustomerDTO result = webClient.get() 
+.uri(“http://localhost:8080/customers/{customerId}”, 1001) 
+.retrieve() 
+.bodyToMono(CustomerDTO.class).block(); 
+Consuming POST Request: 
+String response = webClient.post() 
+.uri("http://localhost:8765/infybank/customers") 
+.bodyValue(customer) 
+.retrieve() 
+.bodyToMono(String.class).block(); 
+Consuming PUT Request:
+webClient.put() 
+.uri(“http://localhost:8080/customers/{customerId}”, 1001) 
+.bodyValue(customerDTO) 
+.retrieve(); 
+Consuming DELETE Request: 
+String response = webClient.delete() 
+.uri(“http://localhost:8080/customers/{customerId}”, 1001) 
+34
+.retrieve() 
+.bodyToMono(String.class).block(); 
+Writing Test cases using JUnit: 
+Dependency: 
+<dependency>
+<groupId>org.springframework.boot</groupId> <artifactId>spring-boot-startertest</artifactId>
+<scope>test</scope>
+</dependency>
+Consider the following CustomerLoginServiceImpl class:
+@Service(value="customerLoginService") public class 
+CustomerLoginServiceImpl implements CustomerLoginService {
+@Autowired
+private CustomerLoginRepository customerLoginRepository;
+public String authenticateCustomer(CustomerLoginDTO customerLoginDTO) throws 
+InfyBankException {
+String toRet = null;
+CustomerLoginDTO customerLoginFromRepository = 
+customerLoginRepository.getCustomerLoginByLoginName(customerLoginDTO.getLoginName());
+if 
+(customerLoginDTO.getPassword().equals(customerLoginFromRepository.getPassword())) {
+toRet = "SUCCESS";
+} else {
+throw new InfyBankException("Service.WRONG_CREDENTIALS");
+}
+return toRet;
+}
+35
+}
+The following test class tests the authenticateCustomer() method of CustomerLoginServiceImpl class:
+package com.infy; import org.junit.jupiter.api.Assertions; import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired; import 
+org.springframework.boot.test.context.SpringBootTest; import 
+com.infy.dto.CustomerLoginDTO; import 
+com.infy.exception.InfyBankException; import 
+com.infy.service.CustomerLoginService;
+@SpringBootTest public class 
+DemoSpringBootCoreApplicationTests {
+@Autowired
+CustomerLoginService customerLoginService; 
+@Test
+public void authenticateCustomerTestValidCredentials() throws InfyBankException { 
+CustomerLoginDTO customer = new CustomerLoginDTO(); 
+customer.setLoginName("monica"); 
+customer.setPassword("monica123");
+String actual = customerLoginService.authenticateCustomer(customer);
+Assertions.assertEquals("SUCCESS", actual);
+} 
+@Test
+public void authenticateCustomerTestInValidCredentials() throws InfyBankException { 
+CustomerLoginDTO customer = new CustomerLoginDTO(); 
+customer.setLoginName("monica"); customer.setPassword("monica13");
+InfyBankException 
+exception=Assertions.assertThrows(InfyBankException.class,()>customerLoginService.authenticateCusto
+mer(customer));
+Assertions.assertEquals("Service.WRONG_CREDENTIALS", exception.getMessage());
+}
+36
+} 
+Writing test cases using Mockito and JUnit: 
+@SpringBootTest
+public class DemoSpringBootCoreApplicationTests {
+@Mock
+CustomerLoginRepository customerLoginRepository;
+@InjectMocks
+CustomerLoginService customerLoginService = new CustomerLoginServiceImpl();
+@Test
+public void authenticateCustomerTestValidCredentials() throws InfyBankException { 
+CustomerLoginDTO customer = new CustomerLoginDTO(); 
+customer.setLoginName("monica"); 
+customer.setPassword("monica123");
+Mockito.when(customerLoginRepository.getCustomerLoginByLoginName("monica")).thenReturn 
+(customer);
+String actual = customerLoginService.authenticateCustomer(customer);
+Assertions.assertEquals("SUCCESS", actual);
+} 
+@Test
+public void authenticateCustomerTestInValidCredentials() throws InfyBankException { 
+CustomerLoginDTO customer = new CustomerLoginDTO(); 
+customer.setLoginName("monica"); customer.setPassword("monica12");
+CustomerLoginDTO fromRepository = new CustomerLoginDTO(); 
+fromRepository.setLoginName("monica"); 
+fromRepository.setPassword("monica123");
+37
+Mockito.when(customerLoginRepository.getCustomerLoginByLoginName("monica")).thenReturn 
+(fromRepository);
+InfyBankException 
+exception=Assertions.assertThrows(InfyBankException.class,()>customerLoginService.authenticateCusto
+mer(customer));
+Assertions.assertEquals("Service.WRONG_CREDENTIALS", exception.getMessage());
+}
+}
+Unit Testing Spring REST Controllers:
+@WebMvcTest(ControllerName.class)
+This is a class level annotation that helps writing test cases for Spring Controllers. This annotation can be 
+fed with the controller name that should be launched for unit testing so that other controllers will not 
+come into picture when this unit test is executed.
+MockMvc:
+MockMvc is used to test the web layer of an application. MockMvc handles the incoming HTTP request 
+and hands it off to the controller without theserver being started. So, it is preferable to test the 
+controllers with MockMvc. But, make sure MockMvc is autowired to the class that performs the test.
+@Autowired is used to inject the MockMvc and ObjectMapper beans that are auto-configured by
+@WebMvcTest
+ObjectMapper: 
+This is a part of the Jackson library used to serialize Java objects into JSON and deserialize JSON into Java 
+objects. It's crucial for constructing and validating request and response bodies in API tests.
+@MockBean:
+This annotation helps in adding mock objects to the spring application context. Mock will create a 
+dummy/duplicate of an existing object and will replace the same in the application context, If the object 
+does not already exist in the application context then it will create one. Mocking is quite useful when the 
+bean that is required by a unit test case is not ready or unstable.
+38
+@DisplayName: provides a more descriptive, human-readable name for the test, which improves 
+test report clarity.
+Performing and Asserting HTTP Requests:
+The core of web layer testing with MockMvc involves a few chained method calls to build and execute a 
+request and then validate the response.
+mockMvc.perform(requestBuilder): This is the entry point. requestBuilder is created using static 
+methods like get(), post(), put(), and delete(), which correspond to HTTP methods.
+.andExpect(resultMatcher): This method asserts the results of the request. You can chain multiple 
+andExpect() calls to validate different aspects of the response.
+.andDo(resultHandler): This is an optional method for performing actions on the result, such as printing 
+the response to the console for debugging (print()).
+Common Assertions:
+JUnit and Spring's MockMvcResultMatchers provide a rich set of matchers for assertions: status().isOk() 
+/ status().isNotFound() / status().isCreated(): Verifies the HTTP status code.
+content().contentType(MediaType.APPLICATION_JSON): Checks the response content type.
+content().string("..."): Verifies that the response body is an exact string.
+mockMvc.perform(MockMvcRequestBuilders.get("/infybank/customers"))
+.andExpect(MockMvcResultMatchers.status().isOk())
+.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_J
+SON))
+.andExpect(MockMvcResultMatchers.jsonPath("$", Matchers.hasSize(2)))
+.andExpect(MockMvcResultMatchers.jsonPath("$[0].customerId", Matchers.is(1)))
+.andExpect(MockMvcResultMatchers.jsonPath("$[0].name", Matchers.is("John Doe")))
+.andExpect(MockMvcResultMatchers.jsonPath("$[1].emailId", 
+Matchers.is("jane.smith@example.com")));
+}
+jsonPath("$[0].customerId", is(1)): This is a powerful feature for validating JSON responses. It uses 
+JSONPath expressions to select specific elements in the JSON document and then compares them to an 
+expected value.
+jsonPath("$", hasSize(2)): This JSONPath expression selects the root of the JSON response and checks if 
+the list at the root has a size of 2.
+39
+// Annotation to test only the CustomerAPI controller in a Spring Boot environment
+@WebMvcTest(CustomerAPI.class)
+public class DemoSpringRestAPITests {
+// Autowire MockMvc to perform HTTP requests in a test environment
+@Autowired
+private MockMvc mockMvc;
+// Autowire ObjectMapper to convert Java objects to and from JSON
+@Autowired
+private ObjectMapper objectMapper;
+// Create a mock of the CustomerService bean to isolate the
+// CustomerAPIcontroller
+@MockBean
+private CustomerService customerService;
+// Define constants for expected success and error messages
+private final String CUSTOMER_NOT_FOUND_MESSAGE = "No customer found with given customer id.";
+private final String INSERT_SUCCESS_MESSAGE = "Customer added successfully with customer id 
+: ";
+private final String UPDATE_SUCCESS_MESSAGE = "Customer emailid successfully updated."; 
+private final String DELETE_SUCCESS_MESSAGE = "Customer details deleted successfully."; 
+private final String NAME_ABSENT_MESSAGE = "Please provide customer name"; // ---
+Test Cases for getAllCustomers() ---
+@Test
+@DisplayName("GET /infybank/customers - Valid: Returns a list of all customers") 
+void testGetAllCustomers_Valid() throws Exception {
+// Create mock CustomerDTO objects
+Doe");
+CustomerDTO customer1 = new CustomerDTO(1, "john.doe@example.com", "John 
+customer1.setDateOfBirth(LocalDate.of(1990, 5, 15));
+40
+Smith");
+CustomerDTO customer2 = new CustomerDTO(2, "jane.smith@example.com", "Jane 
+customer2.setDateOfBirth(LocalDate.of(1985, 10, 20));
+// Create a list of the mock customers
+List<CustomerDTO> customers = Arrays.asList(customer1, customer2);
+Mockito.when(customerService.getAllCustomers()).thenReturn(customers);
+// Perform a GET request to the /infybank/customers endpoint
+mockMvc.perform(MockMvcRequestBuilders.get("/infybank/customers"))
+/*
+* Assert that the HTTP status is OK (200), content type is JSON, JSON array has
+* a size of 2 I
+*/
+.andExpect(MockMvcResultMatchers.status().isOk())
+.andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+Matchers.hasSize(2)))
+.andExpect(MockMvcResultMatchers.jsonPath("$", 
+/*
+* Assert that the customerId of the first element is 1, name of the first
+"jane.smith@example.com"
+* element is "John, emailId of the second element is 
+*/
+Matchers.is(1)))
+.andExpect(MockMvcResultMatchers.jsonPath("$[0].customerId", 
+Matchers.is("John Doe")))
+.andExpect(MockMvcResultMatchers.jsonPath("$[0].name", 
+.andExpect(MockMvcResultMatchers.jsonPath("$[1].emailId", 
+Matchers.is("jane.smith@example.com")));
+}
+// --- Test Cases for getCustomer_Invalid() ---s
+@Test
+41
+@DisplayName("GET /infybank/customers/{customerId} - Invalid: Customer not found (Service 
+Exception)")
+void testGetCustomerDetails_InvalidNotFound() throws Exception {
+Integer notFoundCustomerId = 9;
+// Configure the mock customerService to throw a custom exception when
+// getCustomer() is called with the specified ID
+Mockito.when(customerService.getCustomer(notFoundCustomerId))
+.thenThrow(new 
+InfyBankException("Service.CUSTOMER_NOT_FOUND"));
+/*
+* Perform a GET request to the /infybank/customers/{customerId} endpoint with
+* the notFoundCustomerId
+*/
+mockMvc.perform(MockMvcRequestBuilders.get("/infybank/customers/{customerId}", 
+notFoundCustomerId))
+/*
+* Assert that the HTTP status is NOT_FOUND (404), error code in the 
+JSON //
+* response matches the NOT_FOUND status value, error message in the 
+JSON //
+* response matches the predefined constant
+*/
+.andExpect(MockMvcResultMatchers.status().isNotFound())
+.andExpect(MockMvcResultMatchers.jsonPath("$.errorCode", 
+Matchers.is(HttpStatus.NOT_FOUND.value())))
+.andExpect(MockMvcResultMatchers.jsonPath("$.errorMessage", 
+Matchers.is(CUSTOMER_NOT_FOUND_MESSAGE)));
+}
+// --- Test Cases for addCustomer() ---
+@Test
+@DisplayName("POST /infybank/customers - Valid: Successfully adds a new customer 
+42
+(Refactored Assertion)") void testAddCustomer_Valid() 
+throws Exception {
+// Create a new CustomerDTO object to be sent in the request 
+CustomerDTO newCustomer = new CustomerDTO(); 
+newCustomer.setName("Alice Wonderland"); 
+newCustomer.setEmailId("alice@example.com");
+newCustomer.setDateOfBirth(LocalDate.of(1995, 1, 1));
+Integer generatedId = 101;
+Mockito.when(customerService.addCustomer(ArgumentMatchers.any(CustomerDTO.class))).the 
+nReturn(generatedId);
+/*
+* Perform a POST request to the /infybank/customers endpoint with the //
+* newCustomer object converted to JSON
+*/
+mockMvc.perform(MockMvcRequestBuilders.post("/infybank/customers").contentType(MediaT 
+ype.APPLICATION_JSON)
+.content(objectMapper.writeValueAsString(newCustomer)))
+/*
+* Assert that the HTTP status is CREATED (201),content type is compatible with
+* plain text, response body string matches the success message with the
+* generated ID
+*/
+.andExpect(MockMvcResultMatchers.status().isCreated())
+.andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.TEXT_P
+LAIN))
+.andExpect(MockMvcResultMatchers.content().string(INSERT_SUCCESS_MESSAGE + generatedId));
+43
+}
+@Test
+@DisplayName("POST /infybank/customers - Invalid: Missing customer name (validation)") void 
+testAddCustomer_Invalid() throws Exception {
+// Create an invalid CustomerDTO object with a missing name
+CustomerDTO invalidCustomer = new CustomerDTO(); 
+invalidCustomer.setName(null); 
+invalidCustomer.setEmailId("invalid@example.com"); 
+invalidCustomer.setDateOfBirth(LocalDate.of(2000, 1, 1));
+// Perform a POST request with the invalid customer object
+mockMvc.perform(MockMvcRequestBuilders.post("/infybank/customers").contentType(MediaT 
+ype.APPLICATION_JSON)
+.content(objectMapper.writeValueAsString(invalidCustomer)))
+/*
+* Assert that the HTTP status is BAD_REQUEST (400), error code in the JSON
+* response matches the BAD_REQUEST status value, error message in the JSON
+* response matches the predefined constant
+*/
+.andExpect(MockMvcResultMatchers.status().isBadRequest())
+.andExpect(MockMvcResultMatchers.jsonPath("$.errorCode", 
+Matchers.is(HttpStatus.BAD_REQUEST.value())))
+.andExpect(MockMvcResultMatchers.jsonPath("$.errorMessage", 
+Matchers.is(NAME_ABSENT_MESSAGE)));
+}
+// --- Test Cases for updateCustomer() ---
+@Test
+@DisplayName("PUT /infybank/customers/{customerId} - Valid: Successfully updates customer 
+email") void testUpdateCustomer_Valid() throws Exception {
+// Define the ID of the customer to update
+44
+Integer customerId = 1;
+CustomerDTO customerToUpdate = new CustomerDTO(); 
+customerToUpdate.setEmailId("updated.email@example.com");
+Mockito.doNothing().when(customerService).updateCustomer(customerId, 
+customerToUpdate.getEmailId());
+// Perform a PUT request to the /infybank/customers/{customerId} endpoint
+mockMvc.perform(MockMvcRequestBuilders.put("/infybank/customers/{customerId}", 
+customerId)
+.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(custom 
+erToUpdate)))
+.andExpect(MockMvcResultMatchers.status().isOk())
+.andExpect(MockMvcResultMatchers.content().string(UPDATE_SUCCESS_MESSAGE));
+/*
+* Verify that the updateCustomer() method on the mock service was called
+* exactly once with the specified arguments
+*/
+Mockito.verify(customerService).updateCustomer(customerId, 
+customerToUpdate.getEmailId());
+}
+// --- Test Cases for deleteCustomer() ---
+@Test
+@DisplayName("DELETE /infybank/customers/{customerId} - Valid: Successfully deletes a 
+customer") void testDeleteCustomer_Valid() throws Exception {
+Integer customerId = 1;
+Mockito.doNothing().when(customerService).deleteCustomer(customerId);
+// Perform a DELETE request to the /infybank/customers/{customerId} endpoint 
+mockMvc.perform(MockMvcRequestBuilders.delete("/infybank/customers/{customerId}", customerId))
+.andExpect(MockMvcResultMatchers.status().isOk())
+45
+.andExpect(MockMvcResultMatchers.content().string(DELETE_SUCCESS_MESSAGE));
+Mockito.verify(customerService).deleteCustomer(customerId);
+}
+}
+Spring Microservices Cheat Sheet 
+Spring Security 
+Spring Security is an open-source framework that is used by many for securing their applications in a platformindependent way. Security is applied in a simpler way using declarative programming approach with annotationbased configuration. 
+To create custom security configuration, annotate the class with @Configuration and @EnableWebSecurity 
+annotations as follows: 
+@Configuration 
+@EnableWebSecurity 
+public class SecurityConfig { 
+@Bean 
+PasswordEncoder passwordEncoder() { return new 
+BCryptPasswordEncoder(); 
+} 
+//rest of the code 
+} 
+@EnableWebSecurity enables web security support provided by Spring Security. 
+To perform authentication, bean instance of PasswordEncoder is created. 
+Spring Cloud 
+Spring Cloud provides tools for building microservices applications. It simplifies the development of complex 
+distributed systems. 
+46
+Distributed Configuration 
+Spring Cloud Config Server: 
+• Centralizes configuration management. 
+• Uses Git or other repositories to store configuration. 
+• Provides REST API to access configuration. 
+Pom Dependency: 
+<dependency> 
+<groupId>org.springframework.cloud</groupId> 
+<artifactId>spring-boot-starter-cloud-config </artifactId> 
+</dependency> 
+Spring Cloud Consul 
+Spring Cloud Consul provides a robust mechanism for centralized configuration management in microservices 
+architectures. It leverages Consul's distributed key-value store to store and retrieve configuration properties. 
+Key Features: 
+• Centralized Configuration: Stores configurations in a central location. 
+• Dynamic Updates: Updates to configurations are automatically propagated to microservices. 
+• Service Discovery: Combines configuration management with service discovery. 
+Basic Configuration: 
+1. Dependency: 
+XML 
+<dependency> 
+<groupId>org.springframework.cloud</groupId> 
+<artifactId>spring-cloud-starter-consul-config</artifactId>
+</dependency> 
+2. Consul Configuration: Create a Key-Value pair in Consul with the key as the configuration property name 
+(e.g., my.app.property) and the value as the desired configuration value. 
+3. Spring Boot Application: create bootstrap.yml file or application.yml file, add the following properties and 
+respective values based on your application
+spring:
+47
+application:
+name:
+cloud:
+consul:
+host:
+config:
+enabled:
+prefixes:
+defaultContext:
+format:
+Service Discovery: 
+• Leverages Consul for service registration and discovery. 
+• Automatically registers services and discovers other services. 
+Spring Cloud Consul provides a robust mechanism for service discovery in microservices architectures. It leverages 
+Consul's distributed key-value store to register and discover services. 
+Key Features: 
+• Service Registration: Automatically registers microservices with Consul. 
+• Service Discovery: Discovers other microservices using Consul's DNS or HTTP API. 
+• Health Checks: Periodically checks the health of service instances. 
+Basic Configuration: 
+1. Dependency: 
+<dependency> 
+<groupId>org.springframework.cloud</groupId> 
+<artifactId>spring-cloud-starter-consul-discovery</artifactId> 
+</dependency>
+2. **Consul Configuration:** Inside bootstrap.yml file
+spring:
+cloud:
+consul:
+discovery:
+hostname:
+
+3. **Spring Boot Application:** 
+@Autowired 
+private DiscoveryClient discoveryClient; 
+48
+List<ServiceInstance> instances = discoveryClient.getInstances("my-service");
+String url = instances.get(0).getUri().toString();
+Advanced Configuration: 
+You can customize service discovery behavior using Consul's configuration options and Spring Cloud Consul's 
+properties. 
+Additional Considerations: 
+• Consul's DNS: Use Consul's DNS interface to discover services directly. 
+• Spring Cloud Load Balancer: Combine Consul with Spring Cloud Load Balancer to automatically load 
+balance traffic to service instances. 
+• Spring Cloud Gateway: Use Spring Cloud Gateway to route traffic to microservices based on service 
+discovery information. 
+By effectively utilizing Spring Cloud Consul, you can simplify service discovery in your microservices architecture, 
+improve the reliability and scalability of your applications. 
+
+Load Balancing: 
+• Uses Consul's service discovery to load balance requests. 
+• Distributes traffic across multiple instances of a service. 
+Spring Cloud Load Balancer provides a powerful mechanism for distributing traffic across multiple instances of a 
+microservice. It integrates seamlessly with service discovery mechanisms like Eureka or Consul and automatically 
+selects the appropriate instance based on load balancing algorithms. Key Features: 
+• Automatic Service Discovery: Integrates with service discovery mechanisms like Eureka or Consul. 
+• Load Balancing Algorithms: Supports various load balancing algorithms like round-robin, random, or 
+weighted. 
+• Health Checks: Periodically checks the health of service instances and removes unhealthy instances from 
+the load balancing pool. 
+• Ribbon Client: Provides a client-side load balancing mechanism, allowing you to easily invoke services 
+without worrying about underlying service instances. 
+Basic Configuration: 
+1. Dependency: 
+XML 
+<dependency> 
+<groupId>org.springframework.cloud</groupId> 
+49
+<artifactId>spring-cloud-starter-netflix-ribbon</artifactId> 1 
+
+</dependency> 
+Load-Balanced RestTemplate: 
+@LoadBalanced 
+@Bean 
+public RestTemplate restTemplate() { return new 
+RestTemplate(); 
+} 
+Load-Balanced WebClient: 
+@LoadBalanced 
+@Bean 
+public Webclient.Builder webClient() { 
+return WebClient.builder(); 
+} 
+2. Invoking a Service: 
+@Autowire
+RestTemplate restTemplate;
+@Autowire
+WebClient.Builder webClient;
+ResponseEntity<String> response = restTemplate.getForEntity("http://my-service/my-endpoint", String.class); 
+ResponseEntity<String> response = webClient.build().get().uri("http://my-service/myendpoint").retrieve().bodyToMono(String.class).block(); 
+Resilience4j 
+Resilience4j is a lightweight, flexible, and reactive library for implementing resilience patterns like circuit breakers, 
+rate limiters, retry, bulkhead, and time limiters. 
+
+Resilience4j with Spring Cloud 
+50
+Resilience4j is a powerful library for building resilient applications. When integrated with Spring Cloud, it provides 
+robust mechanisms to handle failures and ensure the availability of your microservices. 
+Key Features: 
+• Circuit Breaker: Prevents cascading failures by automatically failing requests. 
+• Rate Limiter: Limits the number of requests per time unit. 
+• Retry: Automatically retries failed requests. 
+• Bulkhead: Isolates failures to prevent them from affecting other parts of the system. 
+• Time Limiter: Limits the execution time of a function. 
+YAML Configuration: YAML 
+resilience4j.circuitbreaker:
+instances:
+projectInstance1:
+failureRateThreshold: 
+minimumNumberOfCalls: 
+waitDurationInOpenState: 
+automaticTransitionFromOpenToHalfOpenEnabled: 
+permittedNumberOfCallsInHalfOpenState: 
+
+Usage: 
+@CircuitBreaker(name = "myCircuitBreaker",fallbackMethod=”methodname”) 
+public 
+String myMethod() { 
+// ... 
+} 
+Configuration: 
+You can configure Resilience4j using properties or programmatically. 
+
+Circuit Breaker: 
+• Prevents cascading failures by automatically failing requests. 
+• Uses configurable timeouts and retry attempts. 
+51
+Rate Limiter: 
+• Limits the number of requests per time unit. • Prevents overload and resource exhaustion. 
+Retry: 
+• Automatically retries failed requests. 
+• Uses configurable retry intervals and maximum attempts. 
+Bulkhead: 
+• Isolates failures to prevent them from affecting other parts of the system. 
+• Limits the number of threads or resources allocated to a specific operation. 
+Pom Dependency: 
+XML 
+<dependency> 
+<groupId>org.springframework.cloud</groupId> <artifactId>spring-cloud-startercircuitbreakerresilience4j</artifactId> </dependency> 
+
+Spring Cloud Gateway 
+API Gateway: 
+• Provides a single-entry point for microservices. 
+• Routes requests to appropriate services. 
+• Handles security, rate limiting, and other cross-cutting concerns. 
+Pom Dependency: 
+XML 
+<dependency> 
+<groupId>org.springframework.cloud</groupId> 
+<artifactId>spring-cloud-starter-gateway</artifactId> 
+</dependency> 
+Spring Cloud Gateway is a powerful API gateway built on Spring Framework 5. It provides a unified entry point for 
+external clients, handling routing, filtering, and security concerns. 
+Key Features: 
+• Routing: Efficiently directs incoming requests to appropriate microservices based on URL paths, query 
+parameters, or headers. 
+52
+• Filtering: Applies filters to incoming and outgoing requests, enabling cross-cutting concerns like 
+authentication, authorization, rate limiting, and logging. 
+• Resilience: Leverages Resilience4j to implement circuit breakers, rate limiters, and retries, ensuring fault 
+tolerance and graceful degradation. 
+• Security: Integrates with Spring Security for authentication and authorization, securing your API gateway 
+and underlying microservices. 
+YAML configuration:
+spring:
+cloud:
+gateway:
+discovery:
+locator:
+enabled: true
+routes:
+- id: project
+uri: lb://projectms
+predicates:
+- Path=/projects/**
+- id: MentorMS
+uri: lb://mentors
+predicates:
+- Path= /getmentor/**
+filters:
+- PrefixPath=/mentorms/
+By effectively utilizing Spring Cloud Gateway, you can enhance the security, reliability, and performance of your 
+microservices architecture 
+Lombok Configuration 
+Step 1: Add Lombok dependency in any Maven project: 
+<dependency> 
+<groupId>org.projectlombok</groupId> 
+<artifactId>lombok</artifactId> 
+<version>1.18.30</version> 
+<scope>provided</scope> </dependency>
+Step 2: Do maven update (Force update) 
+ Lombok jar will be available in .m2 repository 
+(C:\Users\<username>\.m2\repository\org\projectlombok\lombok\1.18.30) 
+53
+ Double click on the Lombok jar file. Lombok installer will appears as shown below 
+
+ Installer will scan your device(it will take 2-3 mins) and list out all eclipse/sts ides in your device. 
+54
+ After selecting the ides in which Lombok has to be installed , click in install . 
+ Lombok is successfully configured in your device. Click on “Quit installer” and close the window. 
+ Open any of your eclipse/sts ide base location. lombok.jar will be added there as shown below. 
+55
+
+--------------------------------- Lombok is configured and ready to use now ---------------------------------------------
+
+
+Question QP
+24 minutes ago
+Microservices using Spring
+Hands-on QP
+Duration: 2.30 Hours                                                                                                                                 Max Marks:50
+Instructions:
+·    It is a controlled book test. Please follow the guidelines provided by Invigilator.
+·    Launch STS and import the provided projects in the examId folder with name InfyTravel_ToTrainee
+Note: Make sure there are no spaces in directory (workspace or project names)
+·    You must implement the requirements in this project.
+·    Right click on project → Maven → Update Project… → Check the box “Force Update of Snapshots/Releases” and Click Ok.
+·    The code will be evaluated only after submitting it to the submission folder (server).
+·    If the timestamp of the file is greater than the submission time, then the test will not be evaluated. 
+·    You are not supposed to use any network resources.
+·    Any method signature should not be modified or commented, or new method should not be added in the provided project.
+·    Follow the given class diagrams.
+·    Non-Adherence to guidelines may lead to ZERO mark.
+·    Modify database credentials and connection url in application.yml file if required.
+·    Execute the provided table script in src/main/resources folder.
+·    You need to submit the entire project. Please make sure that all the changes made in the project are saved properly. Save all files in STS and save in Hands-on client.
+Cross-check updated files in the examId folder. This folder will only be used for submission by the hands-on client.
+(Note: Improper submission or submitting the code with structural or compilation error(s) may lead to zero marks being awarded)
+Problem Statement:
+In this assessment, you would be building the microservice application EmployeeMS and VehicleMS where CRUD operations for InfyTravel can be done. The requirement is to use the concepts of Spring Boot and Spring Microservices to implement the following functionalities:
+1.    Retrieve the employee details based on the email Id.
+2.    Fetch all the vehicle details based on vehicle type.
+
+Project Structure provided:
+
+VehicleMS
+ 
+
+GatewayMS
+ 
+
+
+EmployeeMS
+
+After running the application, find the sample inputs in EmployeeMS and Vehicle MS (src/main/resources/MSInputData.txt)
+
+Note: Add an appropriate annotation in the DTO and Entity classes of each Services to generate getters and setters.
+
+Artifacts Description:
+VehicleMS:
+1.    Entity class (partially implemented)
+     
+·    com.infy.vehicle.entity.Vehicle.java
+                          
+o    This class is partially implemented. 
+o    Annotate this class with proper annotation to declare it as an entity class with vehicleId as the primary key.
+o    Map this entity class and its attributes to the vehicle table using proper annotations.
+o    Generate the values for vehicleId using the IDENTITY strategy.
+
+2.    Repository
+·    com.infy.vehicle.repository.VehicleRepository.java
+o    This interface should extend the appropriate repository interface.
+o    Define a repository method to retrieve all vehicles of a given vehicleType, and return the result as a List<Vehicle>.
+o    Implement the method using a native query in Query annotation with a stored procedure defined as part of the vehicle_db schema, GetAllVehiclesByType in Vehicle_TableScript.sql inside src/main/resources.
+
+3.    Service Class(Partially implemented)
+·    com.infy.vehicle.service.VehicleServiceImpl.java
+Implement this class according to the class diagram and the description given below:
+                                   
+o    Annotate it with the appropriate stereotype annotation with the value vehicleService.
+o    Annotate it with necessary annotation to manage transactions with appropriate import.
+o    Inject the VehicleRepository and ModelMapper object using the proper annotation.
+           Method Description:
+·    public VehicleDTO getVehicle (Integer vehicleId):
+o    This method is already implemented. Uncomment the logic after required implementation.
+
+·    public List<VehicleDTO> getAllVehicle(String vehicleType):
+o    This method is used to retrieve all vehicle details based on the given vehicleType. 
+o    Invoke the appropriate method of the vehicleRepository by passing vehicleType, which returns a List<Vehicle> object. 
+o    If no vehicle details are found (i.e., the returned list is empty), throw a VehicleException with the message Service.VEHICLETYPE_NOT_FOUND. 
+o    Otherwise, sort the list of Vehicle objects in ascending order of vacancies. 
+o    Convert each Vehicle object into a VehicleDTO object using ModelMapper. 
+o    While populating the VehicleDTO, ensure that the vehicleType is converted to uppercase. 
+o    Finally, return the list of populated VehicleDTO objects.
+
+4.    API Class(Partially implemented)
+·    com.infy.vehicle.api.VehicleAPI.java
+Implement this class according to the class diagram and description given below:
+
+                   
+
+o    Annotate this class with appropriate annotation to declare it as a REST controller class.
+o    Annotate this class with the base URL “/vehicles”.
+o    Inject VehicleService objects with appropriate annotations.
+o    The below method’s functionality has been already implemented. Add the appropriate annotations.
+
+·    public ResponseEntity<VehicleDTO > getVehicle (Integer vehicleId)
+o    This method is used to get the vehicle based on vehicleId.
+o    It accepts a GET request with the URI /vehicle and the vehicleId is passed as a request parameter.
+·    public ResponseEntity<List<VehicleDTO >> getAllVehicle (String vehicleType)
+o    This method is used to get the list of vehicles of given vehicleType.
+o    It accepts a GET request with the URI  /{vehicleType}, where vehicleType is passed as a path variable.
+5.    Test Class
+com.infy.vehicle.VehicleAPITest.java
+o    Implement this class to test the methods of VehicleAPI class using JUnit 5, Mockito and mockMVC as per the class diagram given below: 
+                                                
+o    Annotate this test class to execute Spring Boot-API test targeting VehicleAPI class and use appropriate annotations for mocking using Mockito. 
+o    Inject the MockMvc object  and mock the VehicleService using the appropriate annotations 
+o    Annotate the methods with appropriate annotation to mark them as JUnit 5 test cases.
+Method Description: 
+public void testGetVehicleMethod()
+o    This test case verifies that the getVehicle controller method correctly returns the vehicle details for a given vehicleId. 
+o    Configure Mockito to return a VehicleDTO object when the getVehicle(101) method of the VehicleService is invoked. 
+o    Perform a GET request to the URI /vehicles/vehicle with the vehicleId passed as a request parameter. 
+o    Use appropriate assertions to verify that: 
+o    The HTTP response status is OK (200). The response body contains the expected vehicle details such as: 
+§    vehicleId with value 101
+§    vehicleType with value "TwoWheeler"
+§    vacancies with value 20
+
+EmployeeMS:
+6.    Application class (Partially implemented)
+This is the Spring Boot starter class of the application. 
+This class is partially implemented, and the implementation should be completed appropriately based on the class diagram and description given below.
+                                 
+
+·    This is the Spring Boot starter class of the application.
+·    Instantiate the load balanced WebClient.Builder, and ModelMapper bean.
+
+Note: Add an appropriate annotation in the DTO and Entity classes of each Services to generate getters and setters.
+
+7.    Entity class (partially implemented)
+
+·    com.infy.employee.entity.Employee.java
+
+o    This class is partially implemented. 
+o    Annotate this class with proper annotation to declare it as an entity class with employeeId as the primary key.
+o    Map this entity class and its attributes to the Employee table using proper annotations.
+o    Generate the values for employeeId using the IDENTITY strategy.
+
+8.    DTO class 
+com.infy.employee.dto.EmployeeDTO.java (Partially Implemented)
+
+o    This is a DTO (Data Transfer Object) class that holds Employee details.
+o    Use appropriate annotations from the Java Bean Validation API to validate the attributes according to the description given below.
+(Note: The validation message should not be hard-coded. It should be read from the ValidationMessages.properties file)
+§    employeeName:
+If employeeName is not provided then set “Please enter employee’s name“ as the validation message.
+The name can comprise of multiple words with each word beginning with a capital letter followed by lower characters. If invalid, set “Invalid employee name” as the validation message.
+
+§    emailId:
+If emailId is not provided then set “Please enter employee email Id” as the validation message.
+if it is provided, it can contain one or more alphabets or numbers or . (dot) character followed by the string ‘@abc.com’. If invalid, set “Invalid employee email Id” as the validation message.
+
+§    designation:
+If designation is not provided then set “Please enter employee designation” as the validation message.
+If it is provided, it should be only with these designations SeniorEngineer or Analyst or Associate. If invalid, set “Invalid employee designation” as the validation message.
+
+§    dateOfBirth:
+If dateOfBirth is not provided then set “Please enter employee dateOfBirth” as the validation message. 
+If it is provided it should be a past date else set the message as “Invalid employee dateOfBirth”.
+§    JobLevel:
+If jobLevel is not provided then set “Please enter employee Job Level” as the validation message
+
+
+9.    Repository 
+·    com.infy.employee.repository.EmployeeRepository.java (partially implemented)
+o    This interface should extend the appropriate repository interface.
+o    Define a  method using method name approach (to be implemented).
+§    The method should accept emailId attribute of an Employee class as parameter and return the employee object as Optional<Employee>.
+
+
+10.    Service Class(partially implemented)
+·    com.infy.employee.service.EmployeeServiceImpl.java
+Implement this class according to the class diagram and the description given below:
+                           
+o    Annotate it with the appropriate stereotype annotation with the value employeeService.
+o    Annotate it with necessary annotation to manage transactions.
+o    Inject the EmployeeRepository, ModelMapper object using the proper annotation.
+Method Description:
+·    public EmployeeDTO getEmployee(String emailId)
+o    This method is used to retrieve employee details for vehicle registration.
+o    Invoke the appropriate function of the EmployeeRepository interface by passing the emailId. 
+o    If employee details are not available, the method throws an EmployeeException with the message Service.EMPLOYEE_NOT_FOUND. 
+o    If employee details are found: 
+§    The Employee entity is converted into an EmployeeDTO using ModelMapper.
+§    The employee’s vehicleId is used to populate a VehicleDTO.
+§    The VehicleDTO is set inside the EmployeeDTO.
+§    Return the above populated EmployeeDTO object.
+
+·    public List<EmployeeDTO> getEmployeesWithVehicles()
+o    This method is already implemented. Uncomment the logic after required implementation.
+·    public Integer addEmployee(EmployeeDTO employeeDTO)
+o    This method is already implemented. Uncomment the logic after required implementation.
+11.    API Class 
+·    com.infy.employee.api.EmployeeAPI.java
+Implement this class according to the class diagram and description given below:
+
+
+o    Annotate this class with appropriate annotation to declare it as a REST controller class.
+o    Annotate this class with appropriate annotation so that all its methods are mapped with the base URL “/employees”.
+o    Inject EmployeeService, Web client Builder and Environment objects with appropriate annotations.
+
+Method Description:
+·    public ResponseEntity<EmployeeDTO> getEmployee (String emailId)
+o    This method is used to get the employee details based on the given emailId.
+o    It accepts GET request with URI as ‘/employee/{emailld}’, emailId received as the URI parameter in the method.
+o    Invoke the service class method getEmployee().
+o    Invoke the appropriate Webclient Builder class method by passing vehicleId as an argument. (Note : Fetch the port number by performing Service Discovery for VehicleMS. Retrieve the vehicleId from EmployeeDTO object) 
+o    Set the VehicleDTO retrieved in the previous step to EmployeeDTO. 
+o    Return an object of ResponseEntity with the EmployeeDTO object as a response with the HTTP response status as OK.
+o    Write a fallback method with method name getEmployeeFallBack if the above web client call fails. 
+o    Inside the fallback method set the parameters of EmployeeDTO as below:
+"employeeId": 0, 
+"employeeName": "Fallback method",
+o    Return an object of ResponseEntity with the EmployeeDTO object created above as a response and the HTTP response status as OK.
+NOTE: To check your fallback method implementation, send the request by sending a request to the URL who has a vehicleId : 999.
+Insert the below entry in Employee database and then try the below URL
+INSERT INTO employee(employee_id, name, email_id, designation, date_of_birth,Job_level, vehicle_id) VALUES (1004, 'Sarah', 'sarah@abc.com', 'SeniorEngineer', '1990-05-15', 4, 999);
+<http://localhost:8000/employees/employee/sarah@abc.com>
+·    public ResponseEntity<List<EmployeeDTO>> getEmployeesWithVehicleDetails()
+o    This method is used to fetch employee details along with their associated vehicle information
+o    It accepts a GET REST endpoint mapped to /with-vehicles. 
+o    The method invokes the getEmployeesWithVehicles() method of the EmployeeService to retrieve a list of EmployeeDTO objects. 
+o    For each employee: 
+§    It checks whether the employee has an associated vehicleId.
+§    If a vehicleId is present, a WebClient Builder call is made to the VehicleMS microservice to fetch complete vehicle details. (Note : Fetch the port number by performing Service Discovery for VehicleMS. Retrieve the vehicleId from each EmployeeDTO object)
+o    The retrieved VehicleDTO is then set into the corresponding EmployeeDTO.
+o    After setting the employee object with vehicle details, the method filters the employees based on the following conditions: 
+§    Vehicle type must be TwoWheeler
+§    Vehicle vacancies must be greater than or equal to 20
+o    The filtered list is returned as a ResponseEntity with HTTP status OK (200).
+
+·    public ResponseEntity addEmployee(EmployeeDTO employeeDTO) 
+o    Add the appropriate annotation to 
+§    Map the method to manage HTTP POST requests for the URI /employee 
+§    Add the appropriate annotation to cascade the bean validation.
+§    Add the appropriate annotation to convert the JSON Object to Java Object
+o    The logic of the method is already implemented.
+
+12.    Utility Classes
+·    com.infy.employee.utility.LoggingAspect.java
+
+Implement the following LoggingAspect class to log all the exceptions from service class using Spring AOP.
+                                 
+o    Annotate this class with proper annotation to declare it as Spring Component and Aspect class.
+Method Description: 
+·    public void logExceptionFromService(EmployeeException exception)
+
+Note: The body of the method has been implemented for you. You need to add only annotations.
+
+o    Annotate this method with proper annotation to declare it as an after throwing advice with pointcut expression.
+o    Log all the exception message along with the exception thrown from methods of com.infy.employee.service.EmployeeServiceImpl class at error level.
+
+·    com.infy.employee.utility.ExceptionControllerAdvice.java
+
+Note: The body of the methods have been implemented for you. You need to add only annotations.
+
+o    Annotate this class with proper annotation to declare it as an exception controller advice class.
+o    Inject Environment object using appropriate annotation.
+                         
+Method Description:
+·    public ResponseEntity<ErrorInfo> employeeExceptionHandler(EmployeeException exception)
+o    This method is for handling EmployeeException exception.
+o    Add appropriate annotation to make this method an exception handler for the EmployeeException.
+
+·    public ResponseEntity<ErrorInfo> generalExceptionHandler(Exception exception)
+o    This method is for handling general exceptions.
+o    Add appropriate annotation to make this method an exception handler for any type of exceptions.
+
+·    public ResponseEntity<ErrorInfo> validatorExceptionHandler (Exception exception)
+o    This method is for handling MethodArgumentNotValidException and ConstraintViolationException exceptions.
+o    Add appropriate annotation to make this method an exception handler method for MethodArgumentNotValidException and ConstraintViolationException exceptions.
+Spring Microservices implementation:
+1.    For Consul:
+§    consul is available in the following path: c -> java artifacts -> consul
+§    From the above given path, open a command prompt and paste the link given below: 
+consul agent -server -bootstrap-expect=1 -data-dir=consulFolder -ui -bind=127.0.0.1
+§    Once the consul agent runs, verify the same by sending the below request from your browser
+                                  <http://localhost:8500>
+§    Upon sending the above request a new browser tab will be opened.
+
+2.    For api-gateway - Spring Boot Project:
+·    Configure api-gateway to run on port no 8000.
+·    Kindly provide all Spring properties as mentioned below:
+
+§    This project must be registered with consul server using the application name as "GatewayMS". 
+§    Provide cloud consul as localhost.
+§    Enable the Gateway Service Discovery
+§    Add the route predicate as "/employees/employee/** " and route it to the id as EmployeeMS. 
+§    Add route predicate as “/vehicles/vehicle/** ” and route it to the id as VehicleMS.
+§    Add loadbalancing to EmployeeMS through gateway.
+§    Add loadbalancing to VehicleMS through gateway.
+
+·    Verify the requests to EmployeeMS is routed properly by sending the sample request as: <http://localhost:8000/employees/employee/jack@abc.com>
+NOTE: Do above implementation in application.yml file inside Gateway project. 
+3.    For EmployeeMS - Spring Boot Project:
+·    Configure EmployeeMS project to run on port no 4001.
+·    Kindly provide all Spring properties as mentioned below:
+§    This project must be registered with consul server using the name as "EmployeeMS".
+§    Provide cloud consul and Service discovery as localhost.
+§    Create resilience circuit breaker pattern instance with a name “employeeService”
+§    The threshold for failure rate should be set as 50, size and type of sliding window as 10 and  count-based respectively, minimum calls should be set to 5, while the allowed count of calls in the half open state to be set to 3. When the circuit is open the wait duration should be initialized to 30s and automatic transition from open to half open should be enabled. 
+Assuming EmployeeMS registered in consul, verify the EmployeeMS Microservice is working by sending the request as: http://localhost:4001/employees/employee/jack@abc.com <mailto:jack@abc.com>
+NOTE: Do above implementation in application.yml file inside EmployeeMS project. 
+4.    For VehicleMS - Spring Boot Project:
+·    Configure VehicleMS project to run on port no 4002.
+·    Kindly provide all Spring properties as mentioned below:
+§    This project must be registered with consul server using the name as "VehicleMS".
+§    Provide cloud consul and Service discovery as localhost.
+·    Verify the VehicleMS Microservice is working by sending the request as: <http://localhost:4002/vehicles/vehicle/101>
+    NOTE: Do above implementation in application.yml file inside VehicleMS project.
+
+Note: Verify the Output in Postman or Swagger.
+<http://localhost:8000/employees/with-vehicles>
+
+http://localhost:4001/swagger-ui/index.html#/employee-api/getEmployeesWithVehicleDetails <http://localhost:4001/swagger-ui/index.html>
+ 
+
+ 

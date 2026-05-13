@@ -1,0 +1,160 @@
+1. Vehicle Entity Class
+
+
+
+java
+
+package com.infy.vehicle.entity;  import jakarta.persistence.*; import lombok.AllArgsConstructor; import lombok.Data; import lombok.NoArgsConstructor;  @Entity @Table(name = "vehicle") @Data @NoArgsConstructor @AllArgsConstructor public class Vehicle {     
+    @Id     @GeneratedValue(strategy = GenerationType.IDENTITY)     @Column(name = "vehicle_id")     private Integer vehicleId;     
+    @Column(name = "vehicle_type")     private String vehicleType;     
+    @Column(name = "vacancy")     private Integer vacancies;     
+    @Column(name = "date")     private String date; }
+
+2. Vehicle DTO Class
+
+
+
+java
+
+package com.infy.vehicle.dto;  import lombok.AllArgsConstructor; import lombok.Data; import lombok.NoArgsConstructor;  @Data @NoArgsConstructor @AllArgsConstructor public class VehicleDTO {     
+    private Integer vehicleId;     private String vehicleType;     private String date;     private Integer vacancies; }
+
+3. Vehicle Repository Interface
+
+
+
+java
+
+package com.infy.vehicle.repository;  import com.infy.vehicle.entity.Vehicle; import org.springframework.data.jpa.repository.JpaRepository; import org.springframework.data.jpa.repository.Query; import org.springframework.data.repository.query.Param; import org.springframework.stereotype.Repository;  import java.util.List;  @Repository public interface VehicleRepository extends JpaRepository<Vehicle, Integer> {     
+    @Query(value = "CALL GetAllVehiclesByType(:vehicleType)", nativeQuery = true)     List<Vehicle> getAllVehiclesByType(@Param("vehicleType") String vehicleType); }
+
+4. Vehicle Service Interface
+
+
+
+java
+
+package com.infy.vehicle.service;  import com.infy.vehicle.dto.VehicleDTO; import com.infy.vehicle.exception.VehicleException; import java.util.List;  public interface VehicleService {     
+    public VehicleDTO getVehicle(Integer vehicleId) throws VehicleException;     
+    public List<VehicleDTO> getAllVehicle(String vehicleType) throws VehicleException; }
+
+5. Vehicle Service Implementation
+
+
+
+java
+
+package com.infy.vehicle.service;  import com.infy.vehicle.dto.VehicleDTO; import com.infy.vehicle.entity.Vehicle; import com.infy.vehicle.exception.VehicleException; import com.infy.vehicle.repository.VehicleRepository; import org.modelmapper.ModelMapper; import org.springframework.beans.factory.annotation.Autowired; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional;  import java.util.List; import java.util.Optional; import java.util.stream.Collectors;  @Service(value = "vehicleService") @Transactional public class VehicleServiceImpl implements VehicleService {     
+    @Autowired     private VehicleRepository vehicleRepository;     
+    @Autowired     private ModelMapper modelMapper;     
+    @Override     public VehicleDTO getVehicle(Integer vehicleId) throws VehicleException {         Optional<Vehicle> vehicle = vehicleRepository.findById(vehicleId);         if (vehicle.isPresent()) {             return modelMapper.map(vehicle.get(), VehicleDTO.class);         }         throw new VehicleException("Service.VEHICLE_NOT_FOUND");     }     
+    @Override     public List<VehicleDTO> getAllVehicle(String vehicleType) throws VehicleException {         List<Vehicle> vehicles = vehicleRepository.getAllVehiclesByType(vehicleType);         
+        if (vehicles.isEmpty()) {             throw new VehicleException("Service.VEHICLETYPE_NOT_FOUND");         }         
+        // Sort in ascending order of vacancies         vehicles.sort((v1, v2) -> v1.getVacancies().compareTo(v2.getVacancies()));         
+        // Convert to DTO and convert vehicleType to uppercase         List<VehicleDTO> vehicleDTOs = vehicles.stream()             .map(vehicle -> {                 VehicleDTO dto = modelMapper.map(vehicle, VehicleDTO.class);                 dto.setVehicleType(vehicle.getVehicleType().toUpperCase());                 return dto;             })             .collect(Collectors.toList());         
+        return vehicleDTOs;     } }
+
+6. Vehicle API Controller
+
+
+
+java
+
+package com.infy.vehicle.api;  import com.infy.vehicle.dto.VehicleDTO; import com.infy.vehicle.exception.VehicleException; import com.infy.vehicle.service.VehicleService; import org.springframework.beans.factory.annotation.Autowired; import org.springframework.http.HttpStatus; import org.springframework.http.ResponseEntity; import org.springframework.web.bind.annotation.*;  import java.util.List;  @RestController @RequestMapping("/vehicles") public class VehicleAPI {     
+    @Autowired     private VehicleService vehicleService;     
+    @GetMapping("/vehicle")     public ResponseEntity<VehicleDTO> getVehicle(@RequestParam Integer vehicleId) throws VehicleException {         if (vehicleId == 999) {             throw new RuntimeException("Testing fallback method..!");         }         return new ResponseEntity<>(vehicleService.getVehicle(vehicleId), HttpStatus.OK);     }     
+    @GetMapping("/{vehicleType}")     public ResponseEntity<List<VehicleDTO>> getAllVehicle(@PathVariable String vehicleType) throws VehicleException {         List<VehicleDTO> vehicleDTOs = vehicleService.getAllVehicle(vehicleType);         return new ResponseEntity<>(vehicleDTOs, HttpStatus.OK);     } }
+
+7. Vehicle Exception Class
+
+
+
+java
+
+package com.infy.vehicle.exception;  public class VehicleException extends Exception {     
+    private static final long serialVersionUID = 1L;     
+    public VehicleException(String message) {         super(message);     } }
+
+8. Vehicle Exception Controller Advice
+
+
+
+java
+
+package com.infy.vehicle.utility;  import com.infy.vehicle.exception.VehicleException; import org.apache.logging.log4j.LogManager; import org.apache.logging.log4j.Logger; import org.springframework.beans.factory.annotation.Autowired; import org.springframework.core.env.Environment; import org.springframework.http.HttpStatus; import org.springframework.http.ResponseEntity; import org.springframework.validation.ObjectError; import org.springframework.web.bind.MethodArgumentNotValidException; import org.springframework.web.bind.annotation.ExceptionHandler; import org.springframework.web.bind.annotation.RestControllerAdvice;  import jakarta.validation.ConstraintViolation; import jakarta.validation.ConstraintViolationException; import java.time.LocalDateTime; import java.util.stream.Collectors;  @RestControllerAdvice public class ExceptionControllerAdvice {     
+    private static final Logger LOGGER = LogManager.getLogger(ExceptionControllerAdvice.class);     
+    @Autowired     private Environment environment;     
+    @ExceptionHandler(VehicleException.class)     public ResponseEntity<ErrorInfo> vehicleExceptionHandler(VehicleException exception) {         LOGGER.error(exception.getMessage(), exception);         ErrorInfo errorInfo = new ErrorInfo();         errorInfo.setErrorCode(HttpStatus.BAD_REQUEST.value());         errorInfo.setErrorMessage(environment.getProperty(exception.getMessage()));         errorInfo.setTimestamp(LocalDateTime.now());         return new ResponseEntity<>(errorInfo, HttpStatus.BAD_REQUEST);     }     
+    @ExceptionHandler(Exception.class)     public ResponseEntity<ErrorInfo> generalExceptionHandler(Exception exception) {         LOGGER.error(exception.getMessage(), exception);         ErrorInfo errorInfo = new ErrorInfo();         errorInfo.setErrorCode(HttpStatus.INTERNAL_SERVER_ERROR.value());         errorInfo.setErrorMessage(environment.getProperty("General.EXCEPTION_MESSAGE"));         errorInfo.setTimestamp(LocalDateTime.now());         return new ResponseEntity<>(errorInfo, HttpStatus.INTERNAL_SERVER_ERROR);     }     
+    @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class})     public ResponseEntity<ErrorInfo> validatorExceptionHandler(Exception exception) {         LOGGER.error(exception.getMessage(), exception);         String errorMsg;         if (exception instanceof MethodArgumentNotValidException) {             MethodArgumentNotValidException manvException = (MethodArgumentNotValidException) exception;             errorMsg = manvException.getBindingResult().getAllErrors().stream()                 .map(ObjectError::getDefaultMessage)                 .collect(Collectors.joining(", "));         } else {             ConstraintViolationException cvException = (ConstraintViolationException) exception;             errorMsg = cvException.getConstraintViolations().stream()                 .map(ConstraintViolation::getMessage)                 .collect(Collectors.joining(", "));         }         ErrorInfo errorInfo = new ErrorInfo();         errorInfo.setErrorCode(HttpStatus.BAD_REQUEST.value());         errorInfo.setErrorMessage(errorMsg);         errorInfo.setTimestamp(LocalDateTime.now());         return new ResponseEntity<>(errorInfo, HttpStatus.BAD_REQUEST);     } }
+
+9. Error Info Class
+
+
+
+java
+
+package com.infy.vehicle.utility;  import lombok.AllArgsConstructor; import lombok.Data; import lombok.NoArgsConstructor; import java.time.LocalDateTime;  @Data @NoArgsConstructor @AllArgsConstructor public class ErrorInfo {     private String errorMessage;     private Integer errorCode;     private LocalDateTime timestamp; }
+
+10. Logging Aspect Class
+
+
+
+java
+
+package com.infy.vehicle.utility;  import com.infy.vehicle.exception.VehicleException; import org.apache.logging.log4j.LogManager; import org.apache.logging.log4j.Logger; import org.aspectj.lang.annotation.AfterThrowing; import org.aspectj.lang.annotation.Aspect; import org.springframework.stereotype.Component;  @Aspect @Component public class LoggingAspect {     
+    private static final Logger LOGGER = LogManager.getLogger(LoggingAspect.class);     
+    @AfterThrowing(pointcut = "execution(* com.infy.vehicle.service.Impl.(..))", throwing = "exception")     public void logServiceException(VehicleException exception) {         LOGGER.error(exception.getMessage(), exception);     } }
+
+11. Vehicle Test Class
+
+
+
+java
+
+package com.infy.vehicle;  import com.infy.vehicle.api.VehicleAPI; import com.infy.vehicle.dto.VehicleDTO; import com.infy.vehicle.service.VehicleService; import org.junit.jupiter.api.DisplayName; import org.junit.jupiter.api.Test; import org.mockito.Mockito; import org.springframework.beans.factory.annotation.Autowired; import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest; import org.springframework.boot.test.mock.MockBean; import org.springframework.http.MediaType; import org.springframework.test.web.servlet.MockMvc; import org.springframework.test.web.servlet.request.MockMvcRequestBuilders; import org.springframework.test.web.servlet.result.MockMvcResultMatchers;  import static org.hamcrest.Matchers.is;  @WebMvcTest(VehicleAPI.class) public class VehicleAPITest {     
+    @Autowired     private MockMvc mockMvc;     
+    @MockBean     private VehicleService vehicleService;     
+    @Test     @DisplayName("Test Get Vehicle Method")     public void testGetVehicleMethod() throws Exception {         VehicleDTO vehicleDTO = new VehicleDTO(101, "TwoWheeler", "2024-12-10", 20);         
+        Mockito.when(vehicleService.getVehicle(101)).thenReturn(vehicleDTO);         
+        mockMvc.perform(MockMvcRequestBuilders.get("/vehicles/vehicle")                 .param("vehicleId", "101"))             .andExpect(MockMvcResultMatchers.status().isOk())             .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))             .andExpect(MockMvcResultMatchers.jsonPath("$.vehicleId", is(101)))             .andExpect(MockMvcResultMatchers.jsonPath("$.vehicleType", is("TwoWheeler")))             .andExpect(MockMvcResultMatchers.jsonPath("$.vacancies", is(20)));     } }
+
+12. Vehicle Application Main Class
+
+
+
+java
+
+package com.infy.vehicle;  import org.modelmapper.ModelMapper; import org.springframework.boot.SpringApplication; import org.springframework.boot.autoconfigure.SpringBootApplication; import org.springframework.context.annotation.Bean;  @SpringBootApplication public class Application {     
+    public static void main(String[] args) {         SpringApplication.run(Application.class, args);     }     
+    @Bean     public ModelMapper modelMapper() {         return new ModelMapper();     } }
+
+13. VehicleMS application.yml
+
+
+
+yaml
+
+server:   port: 4002  spring:   application:     name: VehicleMS
+  datasource:     driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/vehicle_db
+    username: root
+    password: root
+  jpa:     hibernate.ddl-auto: update
+  cloud:     consul:       host: localhost
+      port: 8500       discovery:         service-name: VehicleMS
+        enabled: true  API:   INSERT_SUCCESS: Vehicle added successfully with vehicle id.
+ Service:   VEHICLE_FOUND: Vehicle Id Already Exist.
+  VEHICLE_NOT_FOUND: Vehicle Id Not Found.
+  VEHICLETYPE_NOT_FOUND: Vehicle Type and Vacancy Not Found
+ General:   EXCEPTION_MESSAGE: "Request could not be processed due to some issue. Please try again!"
+
+14. VehicleMS Database Script
+
+
+
+sql
+
+DROP SCHEMA IF EXISTS vehicle_db;  CREATE SCHEMA vehicle_db; USE vehicle_db;  CREATE TABLE vehicle (     vehicle_id INT(10) PRIMARY KEY AUTO_INCREMENT,     vehicle_type VARCHAR(50) NOT NULL,     vacancy INT NOT NULL,     date DATE NOT NULL );  INSERT INTO vehicle(vehicle_type, vacancy, date) VALUES ('TwoWheeler', 20, '2024-12-10'); INSERT INTO vehicle(vehicle_type, vacancy, date) VALUES ('FourWheeler', 23, '2024-01-20'); INSERT INTO vehicle(vehicle_type, vacancy, date) VALUES ('TwoWheeler', 24, '2024-02-28'); INSERT INTO vehicle(vehicle_type, vacancy, date) VALUES ('TwoWheeler', 25, '2024-02-29'); INSERT INTO vehicle(vehicle_type, vacancy, date) VALUES ('FourWheeler', 15, '2024-03-15'); INSERT INTO vehicle(vehicle_type, vacancy, date) VALUES ('TwoWheeler', 18, '2024-04-01');  DELIMITER // CREATE PROCEDURE GetAllVehiclesByType(IN p_vehicle_type VARCHAR(50)) BEGIN    SELECT vehicle_id, vehicle_type, vacancy, date 
+   FROM vehicle 
+   WHERE vehicle_type = p_vehicle_type; END // DELIMITER ;  SELECT * FRO

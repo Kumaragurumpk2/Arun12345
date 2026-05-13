@@ -1,0 +1,1526 @@
+EmployeeMS files
+
+package com.infy.employee;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+    @Bean
+    @LoadBalanced
+    WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
+
+}
+package com.infy.employee.api;
+
+import java.util.List;
+
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import com.infy.employee.dto.EmployeeDTO;
+import com.infy.employee.exception.EmployeeException;
+import com.infy.employee.service.EmployeeService;
+
+public class EmployeeAPI {
+
+    private EmployeeService employeeService;
+
+    private Environment environment;
+
+    private WebClient.Builder webClientBuilder;
+
+    public ResponseEntity<EmployeeDTO> getEmployee(String emailId) throws EmployeeException {
+        // ADD YOUR IMPLEMENTATION BELOW
+        return null;
+
+    }
+
+    // CREATE THE FALL BACK METHOD AND ADD THE FUNCTIONALITY AS PER THE QUESTION
+    // PAPER DESCRIPTION.
+
+    public ResponseEntity<List<EmployeeDTO>> getEmployeesWithVehicleDetails() throws EmployeeException {
+
+        return null;
+    }
+
+    public ResponseEntity<String> addEmployee(EmployeeDTO employeeDTO) throws EmployeeException {
+        Integer employeeId = employeeService.addEmployee(employeeDTO);
+        String successMessage = environment.getProperty("API.INSERT_SUCCESS") + " : " + employeeId;
+        return new ResponseEntity<>(successMessage, HttpStatus.CREATED);
+    }
+
+}
+package com.infy.employee.dto;
+
+import java.time.LocalDate;
+
+public class EmployeeDTO {
+
+    private Integer employeeId;
+
+    private String employeeName;
+
+    private String emailId;
+
+    private String designation;
+
+    private LocalDate dateOfBirth;
+
+    private Integer jobLevel;
+
+    private VehicleDTO vehicle;
+}
+package com.infy.employee.dto;
+
+import java.time.LocalDate;
+
+import lombok.Data;
+
+@Data
+public class VehicleDTO {
+
+    private Integer vehicleId;
+    private String vehicleType;
+    private LocalDate date;
+    private Integer vacancies;
+
+}
+package com.infy.employee.entity;
+
+import java.time.LocalDate;
+
+public class Employee {
+
+    private Integer employeeId;
+    private String employeeName;
+    private String emailId;
+    private String designation;
+    private LocalDate dateOfBirth;
+    private Integer jobLevel;
+    private Integer vehicleId;
+
+}
+package com.infy.employee.exception;
+
+public class EmployeeException extends Exception {
+
+    private static final long serialVersionUID = 1L;
+    
+    public EmployeeException(String message) {
+        super(message);
+    }
+}
+package com.infy.employee.repository;
+
+public interface EmployeeRepository {
+
+}
+package com.infy.employee.service;
+
+import java.util.List;
+
+import com.infy.employee.dto.EmployeeDTO;
+import com.infy.employee.exception.EmployeeException;
+
+public interface EmployeeService {
+
+    public EmployeeDTO getEmployee(String emailId) throws EmployeeException;
+
+    List<EmployeeDTO> getEmployeesWithVehicles() throws EmployeeException;
+
+    public Integer addEmployee(EmployeeDTO employeeDTO) throws EmployeeException;
+
+}
+package com.infy.employee.service;
+
+import java.util.List;
+
+import org.modelmapper.ModelMapper;
+
+import com.infy.employee.dto.EmployeeDTO;
+import com.infy.employee.exception.EmployeeException;
+import com.infy.employee.repository.EmployeeRepository;
+
+public class EmployeeServiceImpl implements EmployeeService {
+
+    private EmployeeRepository employeeRepository;
+
+    private ModelMapper modelMapper;
+
+    @Override
+    public EmployeeDTO getEmployee(String emailId) throws EmployeeException {
+        // ADD YOUR IMPLEMENTATION BELOW
+        return null;
+    }
+
+    @Override
+    public List<EmployeeDTO> getEmployeesWithVehicles() throws EmployeeException {
+//        List<Employee> employees = (List<Employee>) employeeRepository.findAll();
+//        TypeToken<List<EmployeeDTO>> typeToken = new TypeToken<List<EmployeeDTO>>() {};
+//        return modelMapper.map(employees, typeToken.getType());
+        return null;
+    }
+
+    @Override
+    public Integer addEmployee(EmployeeDTO employeeDTO) throws EmployeeException {
+//        Optional<Employee> existingEmployee = employeeRepository.findByEmailId(employeeDTO.getEmailId());
+//        if (existingEmployee.isPresent()) {
+//            throw new EmployeeException("Service.EMPLOYEE_ALREADY_EXISTS");
+//        }
+//        return employeeRepository.save(modelMapper.map(employeeDTO, Employee.class)).getEmployeeId();
+        return null;
+    }
+
+}
+package com.infy.employee.utility;
+
+import java.time.LocalDateTime;
+
+import lombok.Data;
+
+@Data
+public class ErrorInfo {
+    private String errorMessage;
+    private Integer errorCode;
+    private LocalDateTime timestamp;
+}
+package com.infy.employee.utility;
+
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import com.infy.employee.exception.EmployeeException;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+
+public class ExceptionControllerAdvice {
+    private Environment environment;
+
+    private static final Logger LOGGER = LogManager.getLogger(ExceptionControllerAdvice.class);
+
+    public ResponseEntity<ErrorInfo> generalExceptionHandler(Exception exception) {
+        LOGGER.error(exception.getMessage(), exception);
+
+        ErrorInfo error = new ErrorInfo();
+        error.setErrorMessage(environment.getProperty("General.EXCEPTION_MESSAGE"));
+        error.setErrorCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        error.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    public ResponseEntity<ErrorInfo> employeeExceptionHandler(EmployeeException exception) {
+        LOGGER.error(exception.getMessage(), exception);
+
+        ErrorInfo error = new ErrorInfo();
+        error.setErrorMessage(environment.getProperty(exception.getMessage()));
+        error.setTimestamp(LocalDateTime.now());
+        error.setErrorCode(HttpStatus.BAD_REQUEST.value());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity<ErrorInfo> validatorExceptionHandler(Exception exception) {
+        LOGGER.error(exception.getMessage(), exception);
+        String errorMsg;
+        if (exception instanceof MethodArgumentNotValidException) {
+            MethodArgumentNotValidException manvException = (MethodArgumentNotValidException) exception;
+            errorMsg = manvException.getBindingResult().getAllErrors().stream().map(ObjectError::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+        } else {
+            ConstraintViolationException cvException = (ConstraintViolationException) exception;
+            errorMsg = cvException.getConstraintViolations().stream().map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+        }
+        ErrorInfo errorInfo = new ErrorInfo();
+        errorInfo.setErrorCode(HttpStatus.BAD_REQUEST.value());
+        errorInfo.setErrorMessage(errorMsg);
+        errorInfo.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(errorInfo, HttpStatus.BAD_REQUEST);
+    }
+}
+package com.infy.employee.utility;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.infy.employee.exception.EmployeeException;
+
+public class LoggingAspect {
+
+    private static final Logger LOGGER = LogManager.getLogger(LoggingAspect.class);
+
+    public void logExceptionFromService(EmployeeException exception) {
+        LOGGER.error(exception.getMessage());
+    }
+
+}
+application.yml of EmployeeMS
+
+#ADD THE CONFIGURATION FOR RESILIENCE, SET THE PORT AND FOR THE CONSUL
+     
+spring: 
+ datasource: 
+   driverClassName: com.mysql.cj.jdbc.Driver 
+   url: jdbc:mysql://localhost/employee_db
+   username: root
+   password: root
+ 
+ jpa: 
+   hibernate.ddl-auto: update
+
+API:
+ INSERT_SUCCESS: Employee added successfully with Employee id
+
+Service:
+ EMPLOYEE_ALREADY_EXISTS: Employee EmailId Already Exist.
+ EMPLOYEE_NOT_FOUND: Employee Not Found.
+ InvalidJobLevel: Please choose the approrite vehicleType based on the jobLevel.
+
+DROP SCHEMA IF EXISTS employee_db;
+
+CREATE SCHEMA employee_db;
+USE employee_db;
+
+CREATE TABLE employee (
+    employee_id INT AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    email_id VARCHAR(100) NOT NULL UNIQUE,
+    designation VARCHAR(30) NOT NULL,
+    date_of_birth DATE NOT NULL,
+    Job_level INT,
+    vehicle_id INT,
+    CONSTRAINT ps_employee_id_pk PRIMARY KEY (employee_id)
+    
+);
+
+
+INSERT INTO employee(employee_id, name, email_id, designation, date_of_birth,Job_level, vehicle_id) VALUES (1001, 'John', 'john@abc.com', 'SeniorEngineer', '1994-01-28', 3, 101);
+INSERT INTO employee(employee_id, name, email_id, designation, date_of_birth,Job_level, vehicle_id) VALUES (1002, 'Jack', 'jack@abc.com', 'Analyst', '1996-07-10', 5,102);
+INSERT INTO employee(employee_id, name, email_id, designation, date_of_birth,Job_level, vehicle_id) VALUES (1003, 'Daniel', 'daniel@abc.com', 'Associate', '1992-08-17',2, 103);
+
+select*from employee;
+
+#Name of the Properties file
+name=LoggerConfigFile
+
+rootLogger.level=INFO
+rootLogger.appenderRef.file.ref=LoggerAppender
+
+#Declaring logger for business logic
+logger.file.name=com.infy.employee.utility
+logger.file.level=DEBUG
+logger.file.appenderRef.file.ref=LoggerAppender
+logger.file.additivity=false
+
+#Declaring logger for business console
+logger.console.name=com.infy.employee
+logger.console.level=INFO
+logger.console.appenderRef.file.ref=ConsoleAppender
+logger.console.additivity=false
+
+# File Appender
+appender.file.name=LoggerAppender
+appender.file.type=File
+appender.file.fileName=log/ErrorLog.log
+#Logging Pattern
+appender.file.layout.type=PatternLayout
+appender.file.layout.pattern=%d{dd-MMM-yyyy HH:mm:ss} %level - %m%n
+
+
+# Console Appender
+appender.console.name=ConsoleAppender
+appender.console.type=Console
+#Logging Pattern
+appender.console.layout.type=PatternLayout
+appender.console.layout.pattern=%m%n
+
+
+1. SUCCESS CASE - Valid Employee Fetch:
+
+GET:
+http://localhost:8000/employees/employee/jack@abc.com
+
+{
+   "employeeId": 1002,
+   "employeeName": "Jack",
+   "emailId": "jack@abc.com",
+   "designation": "Analyst",
+   "dateOfBirth": "1996-07-10",
+   "jobLevel": 5,
+   "vehicle": {
+       "vehicleId": 102,
+       "vehicleType": "FourWheeler",
+       "date": "2024-01-20",
+       "vacancies": 23
+   }
+}
+_______________________________________________________________________________________________________________________
+
+2. SUCCESS CASE - Get Employees with Two Wheeler Vehicles (Vacancy > =20):
+
+GET:
+http://localhost:8000/employees/with-vehicles
+[
+   {
+       "employeeId": 1001,
+       "employeeName": "John",
+       "emailId": "john@abc.com",
+       "designation": "SeniorEngineer",
+       "dateOfBirth": "1994-01-28",
+       "jobLevel": 3,
+       "vehicle": {
+           "vehicleId": 101,
+           "vehicleType": "TwoWheeler",
+           "date": "2024-12-10",
+           "vacancies": 20
+       }
+   },
+   {
+       "employeeId": 1003,
+       "employeeName": "Daniel",
+       "emailId": "daniel@abc.com",
+       "designation": "Associate",
+       "dateOfBirth": "1992-08-17",
+       "jobLevel": 2,
+       "vehicle": {
+           "vehicleId": 103,
+           "vehicleType": "TwoWheeler",
+           "date": "2024-02-28",
+           "vacancies": 24
+       }
+   }
+]
+
+_______________________________________________________________________________________________________________________
+
+
+3. SUCCESS CASE - Add New Employee:
+
+POST:
+http://localhost:8000/employees/employee
+Content-Type: application/json
+
+📤 REQUEST Body:
+{
+   "employeeName": "Sarah Johnson",
+   "emailId": "sarah.johnson@abc.com",
+   "designation": "SeniorEngineer",
+   "dateOfBirth": "1990-05-15",
+   "jobLevel": 4,
+   "vehicle": {
+       "vehicleId": 105
+   }
+}
+
+✅ SUCCESS Output:
+HTTP Status: 201 Created
+"Employee added successfully with Employee id : 1004"
+
+_______________________________________________________________________________________________________________________
+
+4. SUCCESS CASE - Add Employee without Vehicle:
+
+POST:
+http://localhost:8000/employees/employee
+Content-Type: application/json
+
+📤 REQUEST Body:
+{
+   "employeeName": "Michael Brown",
+   "emailId": "michael.brown@abc.com",
+   "designation": "Analyst",
+   "dateOfBirth": "1995-12-08",
+   "jobLevel": 2
+}
+
+✅ SUCCESS Output:
+HTTP Status: 201 Created
+"Employee added successfully with Employee id : 1005"
+
+_______________________________________________________________________________________________________________________
+
+5. ERROR CASE - Invalid Employee Data (Validation):
+
+POST:
+http://localhost:8000/employees/employee
+Content-Type: application/json
+
+📤 REQUEST Body:
+{
+   "employeeName": "john smith",  // ❌ Invalid format (should be "John Smith")
+   "emailId": "invalid-email",    // ❌ Invalid email format
+   "designation": "Manager",      // ❌ Invalid designation
+   "dateOfBirth": "2030-01-01",  // ❌ Future date
+   "jobLevel": 8
+}
+
+❌ ERROR Output:
+HTTP Status: 400 Bad Request
+{
+   "errorMessage": "Invalid employee name, Invalid employee email Id, Invalid employee dateOfBirth, Invalid employee designation",
+   "errorCode": 400,
+   "timestamp": "2026-04-30T12:15:27.8429208"
+}
+_______________________________________________________________________________________________________________________
+
+6. ERROR CASE - Invalid Employee Data (Validation):
+
+POST:
+http://localhost:8000/employees/employee
+Content-Type: application/json
+
+📤 REQUEST Body:
+{
+   "employeeName": null,  // ❌ Invalid format (should be "John Smith")
+   "emailId": null,    // ❌ Invalid email format
+   "designation": null,      // ❌ Invalid designation
+   "dateOfBirth": null,  // ❌ Future date
+   "jobLevel": null
+}
+
+❌ ERROR Output:
+HTTP Status: 400 Bad Requestbody
+{
+   "errorMessage": "Please enter employee email Id, Please enter employee designation, Please enter employee dateOfBirth, Please enter employee's name, Please enter employee Job Level",
+   "errorCode": 400,
+   "timestamp": "2026-04-30T15:02:59.6866296"
+}
+_______________________________________________________________________________________________________________________
+
+Add the below entry in Employee MS and then try the below URL
+INSERT INTO employee(employee_id, name, email_id, designation, date_of_birth,Job_level, vehicle_id) VALUES (1005, 'Sarah', 'sarah@abc.com', 'SeniorEngineer', '1990-05-15', 4, 999);
+
+ 
+
+7. CIRCUIT BREAKER - Vehicle Service Down:
+
+GET:
+http://localhost:8000/employees/employee/sarah@abc.com
+
+{
+   "employeeId": 0,
+   "employeeName": "Fallback method",
+   "emailId": null,
+   "designation": null,
+   "dateOfBirth": null,
+   "jobLevel": null,
+   "vehicle": null
+}
+
+employee.name.notpresent=Please enter employee's name
+employee.name.invalid=Invalid employee name
+employee.emailid.notpresent=Please enter employee email Id
+employee.emailid.invalid=Invalid employee email Id
+employee.designation.notpresent=Please enter employee designation
+employee.designation.invalid=Invalid employee designation
+employee.jobLevel.notpresent=Please enter employee Job Level
+employee.dateofbirth.notpresent=Please enter employee dateOfBirth
+employee.dateofbirth.Invalid=Invalid employee dateOfBirth
+
+
+package com.infy.employee;
+
+import com.infy.employee.repository.EmployeeRepository;
+import com.infy.employee.service.EmployeeService;
+import com.infy.employee.service.EmployeeServiceImpl;
+
+public class ApplicationTests {
+
+    private EmployeeRepository employeeRepository;
+
+    private EmployeeService employeeService = new EmployeeServiceImpl();
+
+    public void registerEmployeeAlreadyExistTest() throws Exception {
+
+    }
+
+}
+
+pom file of EmplyeeMS
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.4</version>
+        <relativePath /> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.infy</groupId>
+    <artifactId>EmployeeMS</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <name>EmployeeMS</name>
+    <description> project for Spring Boot </description>
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2022.0.3</spring-cloud.version>
+    </properties>
+    <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>2022.0.4</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot2</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.dbunit</groupId>
+            <artifactId>dbunit</artifactId>
+            <version>2.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.7</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-runner</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-java</artifactId>
+            <version>6.23.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+
+Gateway Files
+
+package com.infy;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+}
+package com.infy;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class GatewayApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(GatewayApplication.class, args);
+    }
+
+}
+pom of gateway
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.4</version> 
+        <relativePath /> 
+    </parent>
+    <groupId>com.infy</groupId>
+    <artifactId>Gateway</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>Gateway</name>
+    <description>InfyPharmaGateway</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+        <!-- <log4j2.version>2.17.1</log4j2.version> -->
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-netflix-hystrix</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-runner</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.dbunit</groupId>
+            <artifactId>dbunit</artifactId>
+            <version>2.7.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
+            <version>2.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-java</artifactId>
+            <version>6.23.0</version>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            
+            
+        </plugins>
+    </build>
+
+</project>
+
+
+VhicleMS Files
+
+package com.infy.vehicle;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+    
+       @Bean
+        public ModelMapper modelMapper()
+        {
+            return new ModelMapper();
+        }
+}
+package com.infy.vehicle.api;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import com.infy.vehicle.dto.VehicleDTO;
+import com.infy.vehicle.exception.VehicleException;
+import com.infy.vehicle.service.VehicleService;
+
+public class VehicleAPI {
+
+    private VehicleService vehicleService;
+
+    public ResponseEntity<VehicleDTO> getVehicle(Integer vehicleId) throws VehicleException {
+        if (vehicleId == 999) {
+            throw new RuntimeException("Testing fallback method..!");
+        }
+        return new ResponseEntity<>(vehicleService.getVehicle(vehicleId), HttpStatus.OK);
+    }
+
+    public ResponseEntity<List<VehicleDTO>> getAllVehicle(String vehicleType) throws VehicleException {
+        List<VehicleDTO> vehicleDTOs = vehicleService.getAllVehicle(vehicleType);
+        return new ResponseEntity<>(vehicleDTOs, HttpStatus.OK);
+    }
+
+}
+
+
+package com.infy.vehicle.dto;
+
+import java.time.LocalDate;
+
+import lombok.Data;
+
+@Data
+public class VehicleDTO {
+
+    private Integer vehicleId;
+    private String vehicleType;
+    private LocalDate date;
+    private Integer vacancies;
+
+}
+package com.infy.vehicle.entity;
+
+import java.time.LocalDate;
+
+public class Vehicle {
+
+    private Integer vehicleId;
+    private String vehicleType;
+    private LocalDate date;
+    private Integer vacancies;
+
+}
+package com.infy.vehicle.exception;
+
+public class VehicleException extends Exception {
+
+    private static final long serialVersionUID = 1L;
+    
+    public VehicleException(String message) {
+        super(message);
+    }
+}
+package com.infy.vehicle.repository;
+
+public interface VehicleRepository {
+
+}
+package com.infy.vehicle.service;
+
+import java.util.List;
+
+import com.infy.vehicle.dto.VehicleDTO;
+import com.infy.vehicle.exception.VehicleException;
+
+public interface VehicleService {
+
+    public VehicleDTO getVehicle(Integer vehicleId) throws VehicleException;
+    
+    public List<VehicleDTO> getAllVehicle(String vehicleType ) throws VehicleException;
+}
+package com.infy.vehicle.service;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.infy.vehicle.dto.VehicleDTO;
+import com.infy.vehicle.entity.Vehicle;
+import com.infy.vehicle.exception.VehicleException;
+import com.infy.vehicle.repository.VehicleRepository;
+
+public class VehicleServiceImpl implements VehicleService {
+
+    private VehicleRepository vehicleRepository;
+
+    private ModelMapper modelMapper;
+
+    
+    
+    
+    @Override
+    public VehicleDTO getVehicle(Integer vehicleId) throws VehicleException {
+        //UNCOMMENT THE BELOW LOGIC
+//        Optional<Vehicle> v = vehicleRepository.findById(vehicleId);
+//        Vehicle vehicle = v.orElseThrow(() -> new VehicleException("Service.VEHICLE_NOT_FOUND"));
+//        return modelMapper.map(vehicle, VehicleDTO.class);
+        return null;
+    }
+
+    @Override
+    public List<VehicleDTO> getAllVehicle(String vehicleType) throws VehicleException {
+        //ADD YOUR IMPLEMENTATION BELOW
+        return null;
+        
+    }
+}
+package com.infy.vehicle.utility;
+
+import java.time.LocalDateTime;
+
+import lombok.Data;
+
+@Data
+public class ErrorInfo {
+    private String errorMessage;
+    private Integer errorCode;
+    private LocalDateTime timestamp;
+}
+package com.infy.vehicle.utility;
+
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.infy.vehicle.exception.VehicleException;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+
+@RestControllerAdvice
+public class ExceptionControllerAdvice {
+
+    private static final Logger LOGGER = LogManager.getLogger(ExceptionControllerAdvice.class);
+
+    @Autowired
+    private Environment environment;
+
+    @ExceptionHandler(VehicleException.class)
+    public ResponseEntity<ErrorInfo> vehicleExceptionHandler(VehicleException exception) {
+        LOGGER.error(exception.getMessage(), exception);
+        ErrorInfo errorInfo = new ErrorInfo();
+        errorInfo.setErrorCode(HttpStatus.BAD_REQUEST.value());
+        errorInfo.setErrorMessage(environment.getProperty(exception.getMessage()));
+        errorInfo.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(errorInfo, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorInfo> generalExceptionHandler(Exception exception) {
+        LOGGER.error(exception.getMessage(), exception);
+        ErrorInfo errorInfo = new ErrorInfo();
+        errorInfo.setErrorCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        errorInfo.setErrorMessage(environment.getProperty("General.EXCEPTION_MESSAGE"));
+        errorInfo.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(errorInfo, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler({ MethodArgumentNotValidException.class, ConstraintViolationException.class })
+    public ResponseEntity<ErrorInfo> validatorExceptionHandler(Exception exception) {
+        LOGGER.error(exception.getMessage(), exception);
+        String errorMsg;
+        if (exception instanceof MethodArgumentNotValidException) {
+            MethodArgumentNotValidException manvException = (MethodArgumentNotValidException) exception;
+            errorMsg = manvException.getBindingResult().getAllErrors().stream().map(ObjectError::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+        } else {
+            ConstraintViolationException cvException = (ConstraintViolationException) exception;
+            errorMsg = cvException.getConstraintViolations().stream().map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+        }
+        ErrorInfo errorInfo = new ErrorInfo();
+        errorInfo.setErrorCode(HttpStatus.BAD_REQUEST.value());
+        errorInfo.setErrorMessage(errorMsg);
+        errorInfo.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(errorInfo, HttpStatus.BAD_REQUEST);
+    }
+}
+package com.infy.vehicle.utility;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.stereotype.Component;
+
+import com.infy.vehicle.exception.VehicleException;
+
+@Aspect
+@Component
+public class LoggingAspect {
+
+    private static final Logger LOGGER = LogManager.getLogger(LoggingAspect.class);
+
+    @AfterThrowing(pointcut = "execution(* com.infy.vehicle.service.*Impl.*(..))", throwing = "exception")
+    public void logServiceException(VehicleException exception) {
+        LOGGER.error(exception.getMessage(), exception);
+    }
+
+}
+yml of VehicleMS
+
+#SET THE PORT AND FOR THE CONSUL
+
+spring: 
+ datasource: 
+   driverClassName: com.mysql.cj.jdbc.Driver 
+   url: jdbc:mysql://localhost:3306/vehicle_db
+   username: root
+   password: root
+
+
+ jpa: 
+   hibernate.ddl-auto: update
+
+
+ 
+API:
+ INSERT_SUCCESS: Vehicle added successfully with vehicle id.
+
+Service:
+ VEHICLE_FOUND: Vehicle Id Already Exist.
+ VEHICLE_NOT_FOUND: Vehicle Id Not Found.
+ VEHICLETYPE_NOT_FOUND: Vehicle Type and Vacany Not Found
+General:
+ EXCEPTION_MESSAGE: "Request could not be processed due to some issue. Please try again!"
+
+#Name of the Properties file
+name=LoggerConfigFile
+
+rootLogger.level=INFO
+rootLogger.appenderRef.file.ref=LoggerAppender
+
+#Declaring logger for business logic
+logger.file.name=com.infy.vehicle.utility
+logger.file.level=DEBUG
+logger.file.appenderRef.file.ref=LoggerAppender
+logger.file.additivity=false
+
+#Declaring logger for business console
+logger.console.name=com.infy.vehicle
+logger.console.level=INFO
+logger.console.appenderRef.file.ref=ConsoleAppender
+logger.console.additivity=false
+
+# File Appender
+appender.file.name=LoggerAppender
+appender.file.type=File
+appender.file.fileName=log/ErrorLog.log
+#Logging Pattern
+appender.file.layout.type=PatternLayout
+appender.file.layout.pattern=%d{dd-MMM-yyyy HH:mm:ss} %level - %m%n
+
+
+# Console Appender
+appender.console.name=ConsoleAppender
+appender.console.type=Console
+#Logging Pattern
+appender.console.layout.type=PatternLayout
+appender.console.layout.pattern=%m%n
+
+
+1. SUCCESS CASE - Fetch Single Vehicle by ID:
+
+GET:
+http://localhost:4002/vehicles/vehicle?vehicleId=101
+
+{
+   "vehicleId": 101,
+   "vehicleType": "TwoWheeler",
+   "date": "2024-12-10",
+   "vacancies": 20
+}
+
+______________________________________________________________________________________________________________________
+
+2. SUCCESS CASE - Fetch All Vehicles by Type (using stored procedure):
+
+GET:
+http://localhost:4002/vehicles/TwoWheeler
+[
+   {
+       "vehicleId": 106,
+       "vehicleType": "TWOWHEELER",
+       "date": "2024-04-01",
+       "vacancies": 18
+   },
+   {
+       "vehicleId": 101,
+       "vehicleType": "TWOWHEELER",
+       "date": "2024-12-10",
+       "vacancies": 20
+   },
+   {
+       "vehicleId": 103,
+       "vehicleType": "TWOWHEELER",
+       "date": "2024-02-28",
+       "vacancies": 24
+   },
+   {
+       "vehicleId": 104,
+       "vehicleType": "TWOWHEELER",
+       "date": "2024-02-29",
+       "vacancies": 25
+   }
+]
+
+______________________________________________________________________________________________________________________
+
+3. SUCCESS CASE - Fetch FourWheeler Vehicles:
+
+GET:
+http://localhost:4002/vehicles/FourWheeler
+
+[
+   {
+       "vehicleId": 105,
+       "vehicleType": "FOURWHEELER",
+       "date": "2024-03-15",
+       "vacancies": 15
+   },
+   {
+       "vehicleId": 102,
+       "vehicleType": "FOURWHEELER",
+       "date": "2024-01-20",
+       "vacancies": 23
+   }
+]______________________________________________________________________________________________________________________
+
+4. ERROR CASE - Internal Server Error
+
+GET:
+http://localhost:4002/vehicles/vehicle?vehicleId=999
+
+{
+   "errorMessage": "Request could not be processed due to some issue. Please try again!",
+   "errorCode": 500,
+   "timestamp": "2026-05-11T09:30:38.3378065"
+}
+______________________________________________________________________________________________________________________
+
+5. ERROR CASE - No Vehicles Found for Type:
+
+GET:
+http://localhost:4002/vehicles/Bike
+
+{
+   "errorMessage": "Vehicle Type and Vaccany Not Found",
+   "errorCode": 400,
+   "timestamp": "2026-05-11T09:31:13.8232686"
+}
+
+DROP SCHEMA IF EXISTS vehicle_db;
+
+CREATE SCHEMA vehicle_db;
+USE vehicle_db;
+
+CREATE TABLE vehicle (
+    vehicle_id INT(10) PRIMARY KEY,
+    vehicle_type VARCHAR(50) NOT NULL,
+       vacancy INT NOT NULL,
+       date DATE NOT NULL
+
+);
+
+INSERT INTO vehicle(vehicle_id, vehicle_type,  vacancy , date) VALUES (101, 'TwoWheeler', 20, '2024-12-10');
+INSERT INTO vehicle(vehicle_id, vehicle_type,  vacancy , date) VALUES (102, 'FourWheeler', 23, '2024-01-20');
+INSERT INTO vehicle(vehicle_id, vehicle_type,  vacancy , date) VALUES (103, 'TwoWheeler', 24, '2024-02-28');
+INSERT INTO vehicle(vehicle_id, vehicle_type,  vacancy , date) VALUES (104, 'TwoWheeler', 25, '2024-02-29');
+INSERT INTO vehicle(vehicle_id, vehicle_type,  vacancy , date) VALUES (105, 'FourWheeler', 15, '2024-03-15');
+INSERT INTO vehicle(vehicle_id, vehicle_type,  vacancy , date) VALUES (106, 'TwoWheeler', 18, '2024-04-01');
+
+-- Stored Procedure to get all vehicles by type
+DELIMITER //
+CREATE PROCEDURE GetAllVehiclesByType(IN p_vehicle_type VARCHAR(50))
+BEGIN
+   SELECT vehicle_id, vehicle_type, vacancy, date 
+   FROM vehicle 
+   WHERE vehicle_type = p_vehicle_type;
+END //
+DELIMITER ;
+
+select*from vehicle;
+
+package com.infy.vehicle;
+
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.infy.vehicle.service.VehicleService;
+
+public class VehicleAPITest {
+
+    private MockMvc mockMvc;
+
+    private VehicleService vehicleService;
+
+    public void testGetVehicleMethod() throws Exception {
+
+        // ADD YOUR IMPLEMENTATION BELOW
+    }
+
+}
+pom of VehicleMS
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.4</version>
+        <relativePath /> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.infy.vehicle</groupId>
+    <artifactId>VehicleMS</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>VechileMS</name>
+    <description>Demo project for Spring Boot</description>
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2022.0.3</spring-cloud.version>
+    </properties>
+    <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>2022.0.4</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot2</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.dbunit</groupId>
+            <artifactId>dbunit</artifactId>
+            <version>2.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.7</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-runner</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-java</artifactId>
+            <version>6.23.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            
+        </plugins>
+    </build>
+
+</project>
+ 
+
+
